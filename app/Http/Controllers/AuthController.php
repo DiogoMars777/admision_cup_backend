@@ -46,10 +46,18 @@ class AuthController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Obtener nombre y rol para el frontend
+        $nombre = DB::table('persona')->where('id', $user->id_persona)->value('nombre') ?? 'Usuario';
+        $rol = DB::table('rol')->where('id', $user->id_rol)->value('nombre') ?? 'Desconocido';
+        
+        $userData = $user->toArray();
+        $userData['nombre'] = $nombre;
+        $userData['rol'] = $rol;
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user
+            'user' => $userData
         ]);
     }
 
