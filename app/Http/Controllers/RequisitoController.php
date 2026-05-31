@@ -31,6 +31,22 @@ class RequisitoController extends Controller
         return response()->json(['message' => 'Requisito base creado en el catálogo.']);
     }
 
+    public function updateCatalogo(Request $request, $id)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:100',
+            'descripcion' => 'nullable|string|max:255'
+        ]);
+
+        DB::table('catalogo_requisito')->where('id', $id)->update([
+            'nombre' => $request->nombre,
+            'descripcion' => $request->descripcion,
+            'updated_at' => now()
+        ]);
+
+        return response()->json(['message' => 'Requisito base actualizado.']);
+    }
+
     public function deleteCatalogo($id)
     {
         DB::table('catalogo_requisito')->where('id', $id)->delete();

@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Requisitos (Catálogo y Enlaces)
     Route::get('/catalogo-requisitos', [RequisitoController::class, 'getCatalogo']);
     Route::post('/catalogo-requisitos', [RequisitoController::class, 'storeCatalogo']);
+    Route::put('/catalogo-requisitos/{id}', [RequisitoController::class, 'updateCatalogo']);
     Route::delete('/catalogo-requisitos/{id}', [RequisitoController::class, 'deleteCatalogo']);
     
     Route::get('/requisitos', [RequisitoController::class, 'index']);
