@@ -66,6 +66,57 @@ class PostulanteController extends Controller
         return response()->json($postulantes);
     }
 
+    public function getPendientesPago(Request $request)
+    {
+        // Traer todos los postulantes
+        $postulantes = DB::table('postulante')
+            ->join('persona', 'postulante.id_persona', '=', 'persona.id')
+            ->leftJoin('usuario', 'usuario.id_persona', '=', 'persona.id')
+            ->select(
+                'persona.id',
+                'persona.ci',
+                'persona.nombre',
+                'persona.telefono',
+                'postulante.colegio',
+                'usuario.email',
+                'usuario.estado as estado_usuario'
+            )
+            ->orderBy('persona.nombre')
+            ->get();
+
+        $resultado = [];
+        foreach ($postulantes as $p) {
+            // Contar requisitos totales y entregados
+            $totalReqs = DB::table('postulante_requisito')
+                ->where('id_postulante', $p->id)->count();
+            $entregados = DB::table('postulante_requisito')
+                ->where('id_postulante', $p->id)
+                ->where('estado', 'Entregado')->count();
+
+            // Solo incluir si tiene requisitos Y todos están entregados
+            if ($totalReqs > 0 && $totalReqs === $entregados) {
+                // Buscar si ya tiene pago
+                $pago = DB::table('pago')->where('id_postulante', $p->id)->latest('fecha')->first();
+
+                $resultado[] = [
+                    'id'           => $p->id,
+                    'ci'           => $p->ci,
+                    'nombre'       => $p->nombre,
+                    'telefono'     => $p->telefono,
+                    'colegio'      => $p->colegio,
+                    'email'        => $p->email,
+                    'estado_usuario' => $p->estado_usuario,
+                    'tiene_pago'   => !is_null($pago),
+                    'pago'         => $pago,
+                    'docs_total'   => $totalReqs,
+                    'docs_entregados' => $entregados,
+                ];
+            }
+        }
+
+        return response()->json($resultado);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -113,7 +164,34 @@ class PostulanteController extends Controller
                 $this->guardarCarrera($personaId, $request->carrera2, $request->modalidad2, 2);
             }
 
-            // Usuario automático ELIMINADO según solicitud. Queda pendiente conectar a otro proceso.
+            // Auto-asignar todos los requisitos activos al nuevo postulante
+            $requisitos = DB::table('requisito')->where('estado', 'Activo')->get();
+            foreach ($requisitos as $req) {
+                DB::table('postulante_requisito')->insert([
+                    'id_postulante' => $personaId,
+                    'id_requisito'  => $req->id,
+                    'fecha_asignacion' => now()->format('Y-m-d'),
+                    'estado' => 'Pendiente',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+
+            // Crear cuenta de usuario inactiva (se activará al pagar)
+            $rolPostulanteId = DB::table('rol')->where('nombre', 'Postulante')->value('id');
+            if ($rolPostulanteId) {
+                // Usar correo proveído o generar uno genérico para la demo si no hay
+                $correoGenerado = strtolower(str_replace(' ', '', explode(' ', $request->nombre)[0])) . $personaId . '@cup.edu.bo';
+                DB::table('usuario')->insert([
+                    'id_persona' => $personaId,
+                    'id_rol' => $rolPostulanteId,
+                    'email' => $request->email ?: $correoGenerado,
+                    'password' => Hash::make($request->ci), // Contraseña inicial es el CI
+                    'estado' => 'Inactivo', // Queda Inactivo hasta procesar el pago
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             DB::commit();
             return response()->json(['message' => 'Postulante registrado exitosamente.']);
@@ -184,6 +262,84 @@ class PostulanteController extends Controller
         DB::table('postulante')->where('id_persona', $id)->delete();
         DB::table('persona')->where('id', $id)->delete();
         return response()->json(['message' => 'Postulante eliminado.']);
+    }
+
+    public function pagar($id)
+    {
+        DB::beginTransaction();
+        try {
+            // Verificar si el usuario ya está activo
+            $usuarioExistente = DB::table('usuario')->where('id_persona', $id)->first();
+            if ($usuarioExistente && $usuarioExistente->estado === 'Activo') {
+                return response()->json(['message' => 'El postulante ya tiene una cuenta activa.'], 400);
+            }
+
+            // Generar Comprobante simulado
+            $comprobanteId = DB::table('comprobante')->insertGetId([
+                'nro_comprobante' => 'COMP-' . strtoupper(uniqid()),
+                'fecha_emision' => now()->format('Y-m-d'),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            // Registrar el Pago
+            DB::table('pago')->insert([
+                'id_postulante' => $id,
+                'id_comprobante' => $comprobanteId,
+                'monto' => 300.00,
+                'metodo_pago' => 'Pasarela Virtual',
+                'codigo_transaccion' => 'TXN-' . rand(10000, 99999),
+                'estado' => 'Procesado',
+                'fecha' => now()->format('Y-m-d'),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            // Habilitar Usuario y enviarle sus credenciales
+            if ($usuarioExistente) {
+                DB::table('usuario')->where('id_persona', $id)->update([
+                    'estado' => 'Activo',
+                    'updated_at' => now(),
+                ]);
+                $usuario = DB::table('usuario')->where('id_persona', $id)->first();
+                $persona = DB::table('persona')->where('id', $id)->first();
+
+                // Enviar el correo real con las credenciales
+                try {
+                    $htmlContent = "
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;'>
+                        <h2 style='color: #1e3a8a; text-align: center;'>¡Bienvenido a la UAGRM CUP!</h2>
+                        <p style='color: #374151; font-size: 16px;'>Estimado/a <b>{$persona->nombre}</b>,</p>
+                        <p style='color: #374151; font-size: 16px;'>Su pago de matrícula ha sido procesado exitosamente y su cuenta ha sido habilitada en nuestro sistema.</p>
+                        <div style='background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                            <p style='margin: 0 0 10px 0; color: #111827;'><b>Sus credenciales de acceso son:</b></p>
+                            <p style='margin: 0 0 5px 0; color: #374151;'><b>Usuario / Correo:</b> {$usuario->email}</p>
+                            <p style='margin: 0; color: #374151;'><b>Contraseña:</b> {$persona->ci}</p>
+                        </div>
+                        <p style='color: #6b7280; font-size: 14px; text-align: center; margin-top: 30px;'>
+                            Atentamente,<br><b>Dirección de Admisión CUP UAGRM</b>
+                        </p>
+                    </div>
+                    ";
+
+                    \Illuminate\Support\Facades\Mail::html($htmlContent, function ($message) use ($usuario) {
+                        $message->to($usuario->email)
+                                ->subject('Credenciales de Acceso y Confirmación de Pago - UAGRM CUP');
+                    });
+                    
+                    \Illuminate\Support\Facades\Log::info("Correo de credenciales enviado exitosamente a: {$usuario->email}");
+                } catch (\Exception $mailError) {
+                    \Illuminate\Support\Facades\Log::error("Error enviando correo a {$usuario->email}: " . $mailError->getMessage());
+                    // Continuamos con el proceso aunque el correo falle
+                }
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Pago procesado y usuario habilitado exitosamente.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error al procesar el pago.', 'error' => $e->getMessage()], 500);
+        }
     }
 
     /**

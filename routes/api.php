@@ -15,6 +15,11 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 // Verificar bloqueo por intentos fallidos (público)
 Route::post('/check-lockout', [AuthController::class, 'checkLockoutStatus']);
 
+// Catálogos públicos
+Route::get('/public/carreras', function() {
+    return response()->json(\Illuminate\Support\Facades\DB::table('carrera')->select('id', 'nombre')->where('estado', 'Activo')->get());
+});
+
 
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\BitacoraController;
@@ -53,6 +58,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/postulantes', [PostulanteController::class, 'store']);
     Route::put('/postulantes/{id}', [PostulanteController::class, 'update']);
     Route::delete('/postulantes/{id}', [PostulanteController::class, 'destroy']);
+    Route::post('/postulantes/{id}/pagar', [PostulanteController::class, 'pagar']);
+    Route::get('/postulantes-pago', [PostulanteController::class, 'getPendientesPago']);
 
     // Requisitos (Catálogo y Enlaces)
     Route::get('/catalogo-requisitos', [RequisitoController::class, 'getCatalogo']);
