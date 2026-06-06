@@ -1,12 +1,13 @@
 <?php
-// Mapea la conformación de grupos, horarios y requisitos 
+// Mapea la conformación de grupos, horarios, requisitos y pagos
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        // 18. GRUPO 
+        // 19. GRUPO
         Schema::create('grupo', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_gestionacademica')->constrained('gestion_academica')->onDelete('cascade');
@@ -19,7 +20,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 19. POSTULANTE_GRUPO 
+        // 20. POSTULANTE_GRUPO
         Schema::create('postulante_grupo', function (Blueprint $table) {
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
             $table->foreignId('id_grupo')->constrained('grupo')->onDelete('cascade');
@@ -28,11 +29,11 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 20. HORARIO 
+        // 21. HORARIO
         Schema::create('horario', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_grupo')->constrained('grupo')->onDelete('cascade');
-            $table->foreignId('id_docente')->constrained('persona'); // Apunta a persona (Rol docente)
+            $table->foreignId('id_docente')->constrained('persona');
             $table->foreignId('id_materia')->constrained('materia');
             $table->foreignId('id_aula')->constrained('aula');
             $table->string('dia', 20);
@@ -42,18 +43,29 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 21. REQUISITO 
+        // 22. REQUISITO
         Schema::create('requisito', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_abministrador')->constrained('persona'); // Siguiendo el nombre exacto de tu Excel 
-            $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
+            $table->foreignId('id_abministrador')->constrained('persona');
             $table->string('nombre', 100);
             $table->string('descripcion', 255)->nullable();
+            $table->string('tipo_requisito', 50)->nullable();
             $table->string('estado', 20)->default('Pendiente');
             $table->timestamps();
         });
 
-        // 22. PAGO 
+        // 23. POSTULANTE_REQUISITO
+        Schema::create('postulante_requisito', function (Blueprint $table) {
+            $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
+            $table->foreignId('id_requisito')->constrained('requisito')->onDelete('cascade');
+            $table->date('fecha_asignacion');
+            $table->string('estado', 20)->default('Pendiente');
+            $table->string('observacion', 255)->nullable();
+            $table->primary(['id_postulante', 'id_requisito']);
+            $table->timestamps();
+        });
+
+        // 24. PAGO
         Schema::create('pago', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
@@ -69,6 +81,7 @@ return new class extends Migration {
 
     public function down(): void {
         Schema::dropIfExists('pago');
+        Schema::dropIfExists('postulante_requisito');
         Schema::dropIfExists('requisito');
         Schema::dropIfExists('horario');
         Schema::dropIfExists('postulante_grupo');

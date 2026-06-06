@@ -150,7 +150,65 @@ class DemoDataSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+        // Crear Catálogo de 5 Requisitos base
+        $reqsBase = [
+            ['nombre' => 'Fotocopia de CI', 'desc' => 'Documento de identidad legible'],
+            ['nombre' => 'Título Bachiller', 'desc' => 'Título legalizado'],
+            ['nombre' => 'Certificado de nacimiento', 'desc' => 'Original y actualizado'],
+            ['nombre' => 'Fotografía actualizada', 'desc' => 'Fondo rojo 4x4'],
+            ['nombre' => 'Formulario de inscripción', 'desc' => 'Firmado por el postulante'],
+        ];
+
+        $reqIds = [];
+        foreach ($reqsBase as $req) {
+            $reqId = DB::table('requisito')->insertGetId([
+                'id_abministrador' => 1, // Asumimos admin ID 1
+                'nombre' => $req['nombre'],
+                'descripcion' => $req['desc'],
+                'estado' => 'Activo',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $reqIds[] = $reqId;
+        }
+
+        // Asignar requisitos a los postulantes
+        $postulantes = DB::table('postulante')->get();
         
-        $this->command->info('Seeder DemoDataSeeder ejecutado: 10 registros creados por módulo.');
+        foreach ($postulantes as $index => $postulante) {
+            // Simulamos estados distintos para la demo
+            foreach ($reqIds as $rIndex => $reqId) {
+                $estado = 'Pendiente';
+                $observacion = '';
+
+                // El primer postulante tiene todo validado (Completo)
+                if ($index === 0) {
+                    $estado = 'Entregado';
+                } 
+                // El segundo tiene 3 validados (Parcial)
+                else if ($index === 1) {
+                    if ($rIndex < 3) $estado = 'Entregado';
+                    else if ($rIndex == 3) { $estado = 'Pendiente'; $observacion = 'Falta firmar'; }
+                }
+                // Los demás al azar
+                else {
+                    $rand = rand(0, 2);
+                    if ($rand == 0) $estado = 'Entregado';
+                    else if ($rand == 1) { $estado = 'Pendiente'; $observacion = 'Documento ilegible'; }
+                }
+
+                DB::table('postulante_requisito')->insert([
+                    'id_postulante' => $postulante->id_persona,
+                    'id_requisito' => $reqId,
+                    'fecha_asignacion' => now()->format('Y-m-d'),
+                    'estado' => $estado,
+                    'observacion' => $observacion,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+        
+        $this->command->info('Seeder DemoDataSeeder ejecutado: 10 registros creados por módulo y requisitos asignados.');
     }
 }

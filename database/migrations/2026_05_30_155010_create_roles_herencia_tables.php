@@ -1,21 +1,24 @@
 <?php
-// Mapea la especialización de roles (Herencia de Persona) 
+// Mapea la especialización de roles (Herencia de Persona)
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        // 9. POSTULANTE 
+        // 9. POSTULANTE
         Schema::create('postulante', function (Blueprint $table) {
             $table->foreignId('id_persona')->primary()->constrained('persona')->onDelete('cascade');
             $table->date('fecha_nac')->nullable();
             $table->string('direccion', 255)->nullable();
             $table->string('colegio', 150)->nullable();
+            $table->string('turno_preferido', 50)->nullable();      // mañana, tarde 
+            $table->string('modalidad_preferida', 50)->nullable();  // presencial, virtual
             $table->timestamps();
         });
 
-        // 10. DOCENTE 
+        // 10. DOCENTE
         Schema::create('docente', function (Blueprint $table) {
             $table->foreignId('id_persona')->primary()->constrained('persona')->onDelete('cascade');
             $table->string('grado_academico', 100)->nullable();
@@ -23,7 +26,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 11. ADMINISTRATIVO 
+        // 11. ADMINISTRATIVO
         Schema::create('administrativo', function (Blueprint $table) {
             $table->foreignId('id_persona')->primary()->constrained('persona')->onDelete('cascade');
             $table->string('area', 100)->nullable();
@@ -32,16 +35,27 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 12. SUPER_ADMINISTRADOR 
+        // 12. SUPER_ADMINISTRADOR
         Schema::create('super_administrador', function (Blueprint $table) {
             $table->foreignId('id_persona')->primary()->constrained('persona')->onDelete('cascade');
             $table->string('cargo', 100)->nullable();
             $table->string('estado', 20)->default('Activo');
             $table->timestamps();
         });
+
+        // 13. ASPIRANTE_DOCENTE
+        Schema::create('aspirante_docente', function (Blueprint $table) {
+            $table->foreignId('id_persona')->primary()->constrained('persona')->onDelete('cascade');
+            $table->date('fecha_registro')->nullable();
+            $table->string('grado_academico', 100)->nullable();
+            $table->integer('experiencia')->nullable();
+            $table->string('estado', 20)->default('Activo');
+            $table->timestamps();
+        });
     }
 
     public function down(): void {
+        Schema::dropIfExists('aspirante_docente');
         Schema::dropIfExists('super_administrador');
         Schema::dropIfExists('administrativo');
         Schema::dropIfExists('docente');

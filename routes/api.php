@@ -12,6 +12,10 @@ Route::post('/forgot-password', [PasswordResetController::class, 'sendCode']);
 Route::post('/verify-code', [PasswordResetController::class, 'verifyCode']);
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 
+// Verificar bloqueo por intentos fallidos (público)
+Route::post('/check-lockout', [AuthController::class, 'checkLockoutStatus']);
+
+
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\PostulanteController;

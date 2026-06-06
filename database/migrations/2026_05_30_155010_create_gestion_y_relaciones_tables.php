@@ -1,12 +1,13 @@
 <?php
-// Mapea planificaciones de periodos y relaciones de asignación 
+// Mapea planificaciones de periodos y relaciones de asignación
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        // 13. GESTION_ACADEMICA 
+        // 14. GESTION_ACADEMICA
         Schema::create('gestion_academica', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_postulante')->nullable()->constrained('persona')->onDelete('set null');
@@ -19,7 +20,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 14. CUPO_CARRERA 
+        // 15. CUPO_CARRERA
         Schema::create('cupo_carrera', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_carrera')->constrained('carrera')->onDelete('cascade');
@@ -29,7 +30,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 15. POSTULANTE_CARRERA 
+        // 16. POSTULANTE_CARRERA
         Schema::create('postulante_carrera', function (Blueprint $table) {
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
             $table->foreignId('id_carrera')->constrained('carrera')->onDelete('cascade');
@@ -38,7 +39,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 16. DOCENTE_MATERIA 
+        // 17. DOCENTE_MATERIA
         Schema::create('docente_materia', function (Blueprint $table) {
             $table->foreignId('id_docente')->constrained('persona')->onDelete('cascade');
             $table->foreignId('id_materia')->constrained('materia')->onDelete('cascade');
@@ -46,7 +47,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 17. DOCENTE_ESPECIALIDAD 
+        // 18. DOCENTE_ESPECIALIDAD
         Schema::create('docente_especialidad', function (Blueprint $table) {
             $table->foreignId('id_docente')->constrained('persona')->onDelete('cascade');
             $table->foreignId('id_especialidad')->constrained('especialidad')->onDelete('cascade');

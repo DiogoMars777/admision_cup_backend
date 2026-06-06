@@ -40,7 +40,13 @@ class PostulanteController extends Controller
             'fecha_nac' => 'nullable|date',
             'colegio' => 'nullable|string|max:150',
             'email' => 'required|email|unique:usuario,email',
-            'carreras' => 'nullable|array', // IDs de carreras seleccionadas
+            // Nuevos campos
+            'turno' => 'nullable|string|max:50',
+            'modalidad_preferida' => 'nullable|string|max:50',
+            'carrera1' => 'required|string',
+            'modalidad1' => 'required|string',
+            'carrera2' => 'nullable|string',
+            'modalidad2' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -59,35 +65,71 @@ class PostulanteController extends Controller
                 'fecha_nac' => $request->fecha_nac,
                 'direccion' => $request->direccion,
                 'colegio' => $request->colegio,
+                'turno_preferido' => $request->turno ?? 'Mañana',
+                'modalidad_preferida' => $request->modalidad_preferida ?? 'Presencial',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            if ($request->has('carreras') && count($request->carreras) > 0) {
-                foreach ($request->carreras as $index => $carreraId) {
-                    DB::table('postulante_carrera')->insert([
-                        'id_postulante' => $personaId,
-                        'id_carrera' => $carreraId,
-                        'prioridad' => $index + 1,
+            // Guardar Carrera 1
+            if ($request->carrera1 && $request->modalidad1) {
+                $carreraId1 = DB::table('carrera')->where('nombre', $request->carrera1)->value('id');
+                if (!$carreraId1) $carreraId1 = DB::table('carrera')->insertGetId(['nombre' => $request->carrera1, 'created_at' => now(), 'updated_at' => now()]);
+                
+                $modalidadId1 = DB::table('modalidad')->where('nombre', $request->modalidad1)->value('id');
+                if (!$modalidadId1) $modalidadId1 = DB::table('modalidad')->insertGetId(['nombre' => $request->modalidad1, 'created_at' => now(), 'updated_at' => now()]);
+
+                // Asegurar relación en clase intermedia modalidad_carrera
+                $existeRelacion1 = DB::table('modalidad_carrera')->where('id_carrera', $carreraId1)->where('id_modalidad', $modalidadId1)->exists();
+                if (!$existeRelacion1) {
+                    DB::table('modalidad_carrera')->insert([
+                        'id_carrera' => $carreraId1,
+                        'id_modalidad' => $modalidadId1,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
                 }
-            }
 
-            // Crear usuario automáticamente
-            $rolPostulante = DB::table('rol')->where('nombre', 'Postulante')->first();
-            if ($rolPostulante) {
-                DB::table('usuario')->insert([
-                    'id_persona' => $personaId,
-                    'id_rol' => $rolPostulante->id,
-                    'email' => $request->email,
-                    'password' => Hash::make($request->ci), // Contraseña es el CI
-                    'estado' => 'Activo',
+                DB::table('postulante_carrera')->insert([
+                    'id_postulante' => $personaId,
+                    'id_carrera' => $carreraId1,
+                    'id_modalidad' => $modalidadId1,
+                    'prioridad' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
+
+            // Guardar Carrera 2
+            if ($request->carrera2 && $request->modalidad2) {
+                $carreraId2 = DB::table('carrera')->where('nombre', $request->carrera2)->value('id');
+                if (!$carreraId2) $carreraId2 = DB::table('carrera')->insertGetId(['nombre' => $request->carrera2, 'created_at' => now(), 'updated_at' => now()]);
+                
+                $modalidadId2 = DB::table('modalidad')->where('nombre', $request->modalidad2)->value('id');
+                if (!$modalidadId2) $modalidadId2 = DB::table('modalidad')->insertGetId(['nombre' => $request->modalidad2, 'created_at' => now(), 'updated_at' => now()]);
+
+                // Asegurar relación en clase intermedia modalidad_carrera
+                $existeRelacion2 = DB::table('modalidad_carrera')->where('id_carrera', $carreraId2)->where('id_modalidad', $modalidadId2)->exists();
+                if (!$existeRelacion2) {
+                    DB::table('modalidad_carrera')->insert([
+                        'id_carrera' => $carreraId2,
+                        'id_modalidad' => $modalidadId2,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                DB::table('postulante_carrera')->insert([
+                    'id_postulante' => $personaId,
+                    'id_carrera' => $carreraId2,
+                    'id_modalidad' => $modalidadId2,
+                    'prioridad' => 2,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // Usuario automático ELIMINADO según solicitud. Queda pendiente conectar a otro proceso.
 
             DB::commit();
             return response()->json(['message' => 'Postulante registrado exitosamente.']);

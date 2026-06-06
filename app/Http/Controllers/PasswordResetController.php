@@ -21,6 +21,16 @@ class PasswordResetController extends Controller
             'email' => 'required|email',
         ]);
 
+        // Verificar si el email está bloqueado por intentos fallidos de login
+        [$locked, $lockoutSeconds] = AuthController::checkLockout($request->email);
+        if ($locked) {
+            return response()->json([
+                'message' => "Cuenta bloqueada temporalmente por intentos fallidos. Espera {$lockoutSeconds} segundos.",
+                'locked' => true,
+                'lockout_seconds' => $lockoutSeconds,
+            ], 429);
+        }
+
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {

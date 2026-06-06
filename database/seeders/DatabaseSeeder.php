@@ -60,5 +60,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->command->info('Seeder ejecutado: Usuario Super Admin creado correctamente.');
+
+        // 5. Cargar datos de demostración
+        $this->call([
+            DemoDataSeeder::class,
+        ]);
     }
 }
