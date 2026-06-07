@@ -26,6 +26,7 @@ use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\PostulanteController;
 use App\Http\Controllers\RequisitoController;
 use App\Http\Controllers\MateriaController;
+use App\Http\Controllers\AspiranteDocenteController;
 use App\Http\Controllers\DocenteController;
 use App\Http\Controllers\GrupoController;
 use App\Http\Controllers\AulaController;
@@ -79,6 +80,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/materias/{id}', [MateriaController::class, 'destroy']);
     Route::get('/materias/{materiaId}/requisitos', [RequisitoController::class, 'getMateriaRequisitos']);
     Route::post('/materias/{materiaId}/requisitos', [RequisitoController::class, 'syncMateriaRequisitos']);
+
+    // P2 Aspirantes Docentes
+    Route::get('/aspirantes-docentes', [AspiranteDocenteController::class, 'index']);
+    Route::post('/aspirantes-docentes', [AspiranteDocenteController::class, 'createAspirante']);
+    Route::get('/aspirantes-docentes/{id}/materias', [AspiranteDocenteController::class, 'getMateriasPostuladas']);
+    Route::get('/aspirantes-docentes/{id}/materias/{idMateria}/requisitos', [AspiranteDocenteController::class, 'getRequisitosMateria']);
+    Route::post('/aspirantes-docentes/requisito/toggle', [AspiranteDocenteController::class, 'toggleRequisito']);
+    Route::post('/aspirantes-docentes/postular', [AspiranteDocenteController::class, 'postularMateria']);
+    Route::post('/aspirantes-docentes/{id}/convertir', [AspiranteDocenteController::class, 'convertirADocente']);
 
     // P3 Docentes
     Route::get('/docentes', [DocenteController::class, 'index']);

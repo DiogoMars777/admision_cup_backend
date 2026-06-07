@@ -392,16 +392,20 @@ class DemoDataSeeder extends Seeder
         // 13. REQUISITOS + POSTULANTE_REQUISITO
         // ═══════════════════════════════════════════════════════════
         $reqsBase = [
-            ['nombre' => 'Fotocopia de CI', 'desc' => 'Documento de identidad legible'],
-            ['nombre' => 'Título Bachiller', 'desc' => 'Título legalizado'],
-            ['nombre' => 'Certificado de nacimiento', 'desc' => 'Original y actualizado'],
-            ['nombre' => 'Fotografía actualizada', 'desc' => 'Fondo rojo 4x4'],
-            ['nombre' => 'Formulario de inscripción', 'desc' => 'Firmado por el postulante'],
+            ['nombre' => 'Fotocopia de CI', 'desc' => 'Documento de identidad legible', 'tipo' => 'Postulante'],
+            ['nombre' => 'Título Bachiller', 'desc' => 'Título legalizado', 'tipo' => 'Postulante'],
+            ['nombre' => 'Certificado de nacimiento', 'desc' => 'Original y actualizado', 'tipo' => 'Postulante'],
+            ['nombre' => 'Fotografía actualizada', 'desc' => 'Fondo rojo 4x4', 'tipo' => 'Postulante'],
+            ['nombre' => 'Formulario de inscripción', 'desc' => 'Firmado por el postulante', 'tipo' => 'Postulante'],
+            ['nombre' => 'Título Académico', 'desc' => 'Licenciatura o superior', 'tipo' => 'Docente'],
+            ['nombre' => 'Experiencia Docente', 'desc' => 'Mínimo 2 años de experiencia', 'tipo' => 'Docente'],
+            ['nombre' => 'Examen de Suficiencia', 'desc' => 'Aprobación del examen', 'tipo' => 'Docente'],
         ];
 
         $adminPersonaId = DB::table('super_administrador')->value('id_persona') ?? 1;
 
-        $reqIds = [];
+        $reqPostulanteIds = [];
+        $reqDocenteIds = [];
         foreach ($reqsBase as $req) {
             $reqId = DB::table('requisito')->insertGetId([
                 'id_abministrador' => $adminPersonaId,
@@ -411,12 +415,16 @@ class DemoDataSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            $reqIds[] = $reqId;
+            if ($req['tipo'] === 'Postulante') {
+                $reqPostulanteIds[] = $reqId;
+            } else {
+                $reqDocenteIds[] = $reqId;
+            }
         }
 
         // Asignar requisitos a los postulantes con estados variados
         foreach ($postulanteIds as $index => $postId) {
-            foreach ($reqIds as $rIndex => $reqId) {
+            foreach ($reqPostulanteIds as $rIndex => $reqId) {
                 $estado = 'Pendiente';
                 $observacion = '';
 
@@ -502,11 +510,11 @@ class DemoDataSeeder extends Seeder
         // ═══════════════════════════════════════════════════════════
         // 16. MATERIA_REQUISITO
         // ═══════════════════════════════════════════════════════════
-        $materiasReq = array_slice($materiaIdsArray, 0, 3);
-        foreach ($materiasReq as $idx => $matId) {
-            if (isset($reqIds[$idx])) {
+        $materiasReq = array_slice($materiaIdsArray, 0, 5);
+        foreach ($materiasReq as $matId) {
+            foreach ($reqDocenteIds as $reqId) {
                 DB::table('materia_requisito')->updateOrInsert(
-                    ['id_materia' => $matId, 'id_requisito' => $reqIds[$idx]],
+                    ['id_materia' => $matId, 'id_requisito' => $reqId],
                     [
                         'obligatorio' => true,
                         'estado' => 'Activo',
@@ -517,6 +525,40 @@ class DemoDataSeeder extends Seeder
             }
         }
 
-        $this->command->info('✅ DemoDataSeeder completo: Roles, Carreras, Modalidades, Modalidad_Carrera, Postulantes (con turno/modalidad/carreras), Docentes, Grupos, Horarios, Requisitos, Pagos, Evaluaciones y Notas.');
+        // ═══════════════════════════════════════════════════════════
+        // 17. ASPIRANTES A DOCENTE
+        // ═══════════════════════════════════════════════════════════
+        for ($i = 1; $i <= 3; $i++) {
+            $personaId = DB::table('persona')->insertGetId([
+                'ci' => $faker->unique()->randomNumber(8, true),
+                'nombre' => $faker->name,
+                'sexo' => $faker->randomElement(['M', 'F']),
+                'telefono' => $faker->phoneNumber,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('aspirante_docente')->insert([
+                'id_persona' => $personaId,
+                'fecha_registro' => now(),
+                'grado_academico' => $faker->randomElement(['Licenciatura', 'Maestría']),
+                'experiencia' => $faker->numberBetween(0, 5),
+                'estado' => 'Activo',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('usuario')->insert([
+                'id_persona' => $personaId,
+                'id_rol' => $rolPostulanteId,
+                'email' => "aspirante{$i}@cup.edu.bo",
+                'password' => Hash::make('password123'),
+                'estado' => 'Activo',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $this->command->info('✅ DemoDataSeeder completo: Roles, Carreras, Modalidades, Postulantes, Docentes, Grupos, Horarios, Requisitos (Postulante y Docente), Aspirantes.');
     }
 }
