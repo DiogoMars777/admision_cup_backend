@@ -77,6 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/materias', [MateriaController::class, 'store']);
     Route::put('/materias/{id}', [MateriaController::class, 'update']);
     Route::delete('/materias/{id}', [MateriaController::class, 'destroy']);
+    Route::get('/materias/{materiaId}/requisitos', [RequisitoController::class, 'getMateriaRequisitos']);
+    Route::post('/materias/{materiaId}/requisitos', [RequisitoController::class, 'syncMateriaRequisitos']);
 
     // P3 Docentes
     Route::get('/docentes', [DocenteController::class, 'index']);

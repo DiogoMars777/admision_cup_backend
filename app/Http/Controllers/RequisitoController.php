@@ -11,21 +11,34 @@ class RequisitoController extends Controller
     
     public function getCatalogo()
     {
-        return response()->json(DB::table('requisito')->get());
+        return response()->json(DB::table('requisito')->orderBy('id', 'desc')->get());
     }
 
     public function storeCatalogo(Request $request)
     {
         $request->validate([
             'nombre' => 'required|string|max:100',
-            'descripcion' => 'nullable|string|max:255'
+            'descripcion' => 'nullable|string|max:255',
+            'tipo_requisito' => 'required|in:Postulante,Materia',
+            'estado' => 'required|in:Activo,Inactivo'
         ]);
 
+        $existe = DB::table('requisito')
+            ->where('nombre', $request->nombre)
+            ->where('tipo_requisito', $request->tipo_requisito)
+            ->exists();
+
+        if ($existe) {
+            return response()->json(['message' => 'Ya existe un requisito con este nombre y tipo.'], 422);
+        }
+
+        $user = $request->user();
         DB::table('requisito')->insert([
-            'id_abministrador' => $request->user() ? ($request->user()->id_persona ?? 1) : 1,
+            'id_abministrador' => $user ? ($user->id_persona ?? 1) : 1,
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
-            'estado' => 'Activo',
+            'tipo_requisito' => $request->tipo_requisito,
+            'estado' => $request->estado,
             'created_at' => now(),
             'updated_at' => now()
         ]);
@@ -37,12 +50,16 @@ class RequisitoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:100',
-            'descripcion' => 'nullable|string|max:255'
+            'descripcion' => 'nullable|string|max:255',
+            'tipo_requisito' => 'required|in:Postulante,Materia',
+            'estado' => 'required|in:Activo,Inactivo'
         ]);
 
         DB::table('requisito')->where('id', $id)->update([
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
+            'tipo_requisito' => $request->tipo_requisito,
+            'estado' => $request->estado,
             'updated_at' => now()
         ]);
 
@@ -53,6 +70,71 @@ class RequisitoController extends Controller
     {
         DB::table('requisito')->where('id', $id)->delete();
         return response()->json(['message' => 'Requisito base eliminado.']);
+    }
+
+    // --- ASIGNACIÓN DE REQUISITOS POR MATERIA ---
+    public function getMateriaRequisitos($materiaId)
+    {
+        // Devuelve todos los requisitos tipo Materia, y si están asignados a la materia, incluye esa información
+        $requisitosMateria = DB::table('requisito')
+            ->where('tipo_requisito', 'Materia')
+            ->leftJoin('materia_requisito', function ($join) use ($materiaId) {
+                $join->on('requisito.id', '=', 'materia_requisito.id_requisito')
+                     ->where('materia_requisito.id_materia', '=', $materiaId);
+            })
+            ->where(function ($query) {
+                $query->where('requisito.estado', 'Activo')
+                      ->orWhereNotNull('materia_requisito.id');
+            })
+            ->select(
+                'requisito.id as requisito_id',
+                'requisito.nombre',
+                'requisito.descripcion',
+                DB::raw('CASE WHEN materia_requisito.id IS NOT NULL THEN 1 ELSE 0 END as asignado'),
+                'materia_requisito.obligatorio',
+                'materia_requisito.estado as relacion_estado'
+            )
+            ->get();
+            
+        return response()->json($requisitosMateria);
+    }
+
+    public function syncMateriaRequisitos(Request $request, $materiaId)
+    {
+        $request->validate([
+            'asignaciones' => 'required|array',
+            'asignaciones.*.requisito_id' => 'required|exists:requisito,id',
+            'asignaciones.*.obligatorio' => 'required|boolean',
+            'asignaciones.*.estado' => 'required|in:Activo,Inactivo'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Eliminar asignaciones previas
+            DB::table('materia_requisito')->where('id_materia', $materiaId)->delete();
+
+            // Insertar nuevas asignaciones
+            $insertData = [];
+            foreach ($request->asignaciones as $asig) {
+                $insertData[] = [
+                    'id_materia' => $materiaId,
+                    'id_requisito' => $asig['requisito_id'],
+                    'obligatorio' => $asig['obligatorio'],
+                    'estado' => $asig['estado'],
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+            }
+            if (!empty($insertData)) {
+                DB::table('materia_requisito')->insert($insertData);
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Asignaciones actualizadas correctamente.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error al guardar asignaciones: ' . $e->getMessage()], 500);
+        }
     }
 
     // --- 2. GESTIÓN DE REQUISITOS ENLAZADOS A POSTULANTES ---

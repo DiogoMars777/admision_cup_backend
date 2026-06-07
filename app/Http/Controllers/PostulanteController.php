@@ -164,8 +164,14 @@ class PostulanteController extends Controller
                 $this->guardarCarrera($personaId, $request->carrera2, $request->modalidad2, 2);
             }
 
-            // Auto-asignar todos los requisitos activos al nuevo postulante
-            $requisitos = DB::table('requisito')->where('estado', 'Activo')->get();
+            // Auto-asignar todos los requisitos activos (tipo Postulante) al nuevo postulante
+            $requisitos = DB::table('requisito')
+                ->where('estado', 'Activo')
+                ->where(function($q) {
+                    $q->where('tipo_requisito', 'Postulante')
+                      ->orWhereNull('tipo_requisito');
+                })
+                ->get();
             foreach ($requisitos as $req) {
                 DB::table('postulante_requisito')->insert([
                     'id_postulante' => $personaId,
