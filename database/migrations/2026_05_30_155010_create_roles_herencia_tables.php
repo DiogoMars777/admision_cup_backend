@@ -10,6 +10,7 @@ return new class extends Migration {
         // 9. POSTULANTE
         Schema::create('postulante', function (Blueprint $table) {
             $table->foreignId('id_persona')->primary()->constrained('persona')->onDelete('cascade');
+            $table->foreignId('id_gestionacademica')->nullable()->constrained('gestion_academica')->onDelete('set null');
             $table->date('fecha_nac')->nullable();
             $table->string('direccion', 255)->nullable();
             $table->string('colegio', 150)->nullable();

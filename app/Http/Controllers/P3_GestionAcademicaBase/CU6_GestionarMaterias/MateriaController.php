@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P3_GestionAcademicaBase\CU6_GestionarMaterias;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +11,7 @@ class MateriaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('materia')->select('id', 'nombre', 'descripcion', 'estado');
+        $query = \App\Models\P3_GestionAcademicaBase\Materia::select('id', 'nombre', 'descripcion', 'estado');
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
@@ -26,7 +28,7 @@ class MateriaController extends Controller
             'descripcion' => 'nullable|string|max:255',
         ]);
 
-        DB::table('materia')->insert([
+        \App\Models\P3_GestionAcademicaBase\Materia::insert([
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
             'estado' => 'Activo',
@@ -45,7 +47,7 @@ class MateriaController extends Controller
             'estado' => 'required|string|max:20',
         ]);
 
-        DB::table('materia')->where('id', $id)->update([
+        \App\Models\P3_GestionAcademicaBase\Materia::where('id', $id)->update([
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
             'estado' => $request->estado,
@@ -57,7 +59,7 @@ class MateriaController extends Controller
 
     public function destroy($id)
     {
-        DB::table('materia')->where('id', $id)->delete();
+        \App\Models\P3_GestionAcademicaBase\Materia::where('id', $id)->delete();
         return response()->json(['message' => 'Materia eliminada.']);
     }
 }

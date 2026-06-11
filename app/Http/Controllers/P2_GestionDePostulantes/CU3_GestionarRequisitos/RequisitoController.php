@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P2_GestionDePostulantes\CU3_GestionarRequisitos;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +13,7 @@ class RequisitoController extends Controller
     
     public function getCatalogo()
     {
-        return response()->json(DB::table('requisito')->orderBy('id', 'desc')->get());
+        return response()->json(\App\Models\P2_GestionDePostulantes\Requisito::orderBy('id', 'desc')->get());
     }
 
     public function storeCatalogo(Request $request)
@@ -23,7 +25,7 @@ class RequisitoController extends Controller
             'estado' => 'required|in:Activo,Inactivo'
         ]);
 
-        $existe = DB::table('requisito')
+        $existe = \App\Models\P2_GestionDePostulantes\Requisito::query()
             ->where('nombre', $request->nombre)
             ->where('tipo_requisito', $request->tipo_requisito)
             ->exists();
@@ -33,7 +35,7 @@ class RequisitoController extends Controller
         }
 
         $user = $request->user();
-        DB::table('requisito')->insert([
+        \App\Models\P2_GestionDePostulantes\Requisito::insert([
             'id_abministrador' => $user ? ($user->id_persona ?? 1) : 1,
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
@@ -55,7 +57,7 @@ class RequisitoController extends Controller
             'estado' => 'required|in:Activo,Inactivo'
         ]);
 
-        DB::table('requisito')->where('id', $id)->update([
+        \App\Models\P2_GestionDePostulantes\Requisito::where('id', $id)->update([
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
             'tipo_requisito' => $request->tipo_requisito,
@@ -68,7 +70,7 @@ class RequisitoController extends Controller
 
     public function deleteCatalogo($id)
     {
-        DB::table('requisito')->where('id', $id)->delete();
+        \App\Models\P2_GestionDePostulantes\Requisito::where('id', $id)->delete();
         return response()->json(['message' => 'Requisito base eliminado.']);
     }
 
@@ -76,7 +78,7 @@ class RequisitoController extends Controller
     public function getMateriaRequisitos($materiaId)
     {
         // Devuelve todos los requisitos tipo Materia, y si están asignados a la materia, incluye esa información
-        $requisitosMateria = DB::table('requisito')
+        $requisitosMateria = \App\Models\P2_GestionDePostulantes\Requisito::query()
             ->where('tipo_requisito', 'Materia')
             ->leftJoin('materia_requisito', function ($join) use ($materiaId) {
                 $join->on('requisito.id', '=', 'materia_requisito.id_requisito')
@@ -111,7 +113,7 @@ class RequisitoController extends Controller
         DB::beginTransaction();
         try {
             // Eliminar asignaciones previas
-            DB::table('materia_requisito')->where('id_materia', $materiaId)->delete();
+            \App\Models\P3_GestionAcademicaBase\MateriaRequisito::where('id_materia', $materiaId)->delete();
 
             // Insertar nuevas asignaciones
             $insertData = [];
@@ -126,7 +128,7 @@ class RequisitoController extends Controller
                 ];
             }
             if (!empty($insertData)) {
-                DB::table('materia_requisito')->insert($insertData);
+                \App\Models\P3_GestionAcademicaBase\MateriaRequisito::insert($insertData);
             }
 
             DB::commit();
@@ -175,7 +177,7 @@ class RequisitoController extends Controller
         ]);
 
         // Validar si el postulante ya tiene este requisito asignado
-        $existe = DB::table('postulante_requisito')
+        $existe = \App\Models\P2_GestionDePostulantes\PostulanteRequisito::query()
             ->where('id_postulante', $request->id_postulante)
             ->where('id_requisito', $request->id_catalogo)
             ->exists();
@@ -184,7 +186,7 @@ class RequisitoController extends Controller
             return response()->json(['message' => 'El postulante ya tiene asignado este requisito.'], 422);
         }
 
-        DB::table('postulante_requisito')->insert([
+        \App\Models\P2_GestionDePostulantes\PostulanteRequisito::insert([
             'id_postulante' => $request->id_postulante,
             'id_requisito' => $request->id_catalogo,
             'fecha_asignacion' => now()->format('Y-m-d'),
@@ -206,7 +208,7 @@ class RequisitoController extends Controller
         $ids = explode('-', $id);
         if (count($ids) != 2) return response()->json(['message' => 'ID inválido'], 400);
 
-        DB::table('postulante_requisito')
+        \App\Models\P2_GestionDePostulantes\PostulanteRequisito::query()
             ->where('id_postulante', $ids[0])
             ->where('id_requisito', $ids[1])
             ->update([
@@ -223,7 +225,7 @@ class RequisitoController extends Controller
         $ids = explode('-', $id);
         if (count($ids) != 2) return response()->json(['message' => 'ID inválido'], 400);
 
-        DB::table('postulante_requisito')
+        \App\Models\P2_GestionDePostulantes\PostulanteRequisito::query()
             ->where('id_postulante', $ids[0])
             ->where('id_requisito', $ids[1])
             ->delete();

@@ -10,10 +10,17 @@ return new class extends Migration {
         // 25. EVALUACION
         Schema::create('evaluacion', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_materia')->constrained('materia')->onDelete('cascade');
-            $table->foreignId('id_gestionacademica')->constrained('gestion_academica')->onDelete('cascade');
             $table->string('nombre_eva', 100);
             $table->decimal('puntaje_max', 5, 2);
+            $table->timestamps();
+        });
+
+        // 25.5 PROGRAMACION_EVALUACION
+        Schema::create('programacion_evaluacion', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('id_evaluacion')->constrained('evaluacion')->onDelete('cascade');
+            $table->foreignId('id_gestionacademica')->constrained('gestion_academica')->onDelete('cascade');
+            $table->foreignId('id_materia')->constrained('materia')->onDelete('cascade');
             $table->date('fecha')->nullable();
             $table->timestamps();
         });
@@ -22,8 +29,9 @@ return new class extends Migration {
         Schema::create('nota', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
-            $table->foreignId('id_evaluacion')->constrained('evaluacion')->onDelete('cascade');
-            $table->decimal('puntaje_obtenido', 5, 2);
+            $table->foreignId('id_programacion_evaluacion')->constrained('programacion_evaluacion')->onDelete('cascade');
+            $table->foreignId('id_materia')->constrained('materia')->onDelete('cascade');
+            $table->decimal('puntaje_obtenido', 5, 2)->nullable();
             $table->string('estado', 20)->nullable();
             $table->timestamps();
         });
@@ -98,6 +106,7 @@ return new class extends Migration {
         Schema::dropIfExists('cargamasiva');
         Schema::dropIfExists('asistencia');
         Schema::dropIfExists('nota');
+        Schema::dropIfExists('programacion_evaluacion');
         Schema::dropIfExists('evaluacion');
     }
 };

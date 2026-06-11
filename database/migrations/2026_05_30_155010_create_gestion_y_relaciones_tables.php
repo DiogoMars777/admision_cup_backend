@@ -10,7 +10,6 @@ return new class extends Migration {
         // 14. GESTION_ACADEMICA
         Schema::create('gestion_academica', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_postulante')->nullable()->constrained('persona')->onDelete('set null');
             $table->string('nombre', 100);
             $table->integer('año');
             $table->string('periodo', 20);

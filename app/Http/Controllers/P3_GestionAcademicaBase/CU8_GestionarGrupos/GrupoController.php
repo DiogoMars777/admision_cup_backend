@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P3_GestionAcademicaBase\CU8_GestionarGrupos;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +11,7 @@ class GrupoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('grupo')
+        $query = \App\Models\P3_GestionAcademicaBase\Grupo::query()
             ->join('gestion_academica', 'grupo.id_gestionacademica', '=', 'gestion_academica.id')
             ->select(
                 'grupo.id',
@@ -40,7 +42,7 @@ class GrupoController extends Controller
             'turno' => 'nullable|string|max:50',
         ]);
 
-        DB::table('grupo')->insert([
+        \App\Models\P3_GestionAcademicaBase\Grupo::insert([
             'id_gestionacademica' => $request->id_gestionacademica,
             'nombre' => $request->nombre,
             'cupo_max' => $request->cupo_max,
@@ -65,7 +67,7 @@ class GrupoController extends Controller
             'estado' => 'required|string|max:20',
         ]);
 
-        DB::table('grupo')->where('id', $id)->update([
+        \App\Models\P3_GestionAcademicaBase\Grupo::where('id', $id)->update([
             'nombre' => $request->nombre,
             'cupo_max' => $request->cupo_max,
             'modalidad' => $request->modalidad,
@@ -79,12 +81,12 @@ class GrupoController extends Controller
 
     public function destroy($id)
     {
-        DB::table('grupo')->where('id', $id)->delete();
+        \App\Models\P3_GestionAcademicaBase\Grupo::where('id', $id)->delete();
         return response()->json(['message' => 'Grupo eliminado.']);
     }
 
     public function getGestiones()
     {
-        return response()->json(DB::table('gestion_academica')->select('id', 'nombre', 'periodo', 'año')->get());
+        return response()->json(\App\Models\P3_GestionAcademicaBase\GestionAcademica::select('id', 'nombre', 'periodo', 'año')->get());
     }
 }

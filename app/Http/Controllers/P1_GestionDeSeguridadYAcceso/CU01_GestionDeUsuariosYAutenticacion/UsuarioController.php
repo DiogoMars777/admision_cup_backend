@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P1_GestionDeSeguridadYAcceso\CU01_GestionDeUsuariosYAutenticacion;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -11,7 +13,7 @@ class UsuarioController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('usuario')
+        $query = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::query()
             ->join('persona', 'usuario.id_persona', '=', 'persona.id')
             ->join('rol', 'usuario.id_rol', '=', 'rol.id')
             ->select(
@@ -45,14 +47,14 @@ class UsuarioController extends Controller
 
         DB::beginTransaction();
         try {
-            $personaId = DB::table('persona')->insertGetId([
+            $personaId = \App\Models\Shared\Persona::insertGetId([
                 'ci' => $request->ci,
                 'nombre' => $request->nombre,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            $userId = DB::table('usuario')->insertGetId([
+            $userId = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::insertGetId([
                 'id_persona' => $personaId,
                 'id_rol' => $request->id_rol,
                 'email' => $request->email,
@@ -75,7 +77,7 @@ class UsuarioController extends Controller
 
     public function update(Request $request, $id)
     {
-        $usuario = DB::table('usuario')->where('id', $id)->first();
+        $usuario = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id', $id)->first();
         if (!$usuario) return response()->json(['message' => 'Usuario no encontrado'], 404);
 
         $request->validate([
@@ -85,7 +87,7 @@ class UsuarioController extends Controller
 
         DB::beginTransaction();
         try {
-            DB::table('persona')->where('id', $usuario->id_persona)->update([
+            \App\Models\Shared\Persona::where('id', $usuario->id_persona)->update([
                 'nombre' => $request->nombre,
                 'updated_at' => now(),
             ]);
@@ -99,7 +101,7 @@ class UsuarioController extends Controller
                 $updateData['password'] = Hash::make($request->password);
             }
 
-            DB::table('usuario')->where('id', $id)->update($updateData);
+            \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id', $id)->update($updateData);
 
             $this->logBitacora($request->user()->id, 'UPDATE', 'Seguridad', "Usuario ID {$id} actualizado", $request->ip());
 
@@ -113,11 +115,11 @@ class UsuarioController extends Controller
 
     public function toggleStatus(Request $request, $id)
     {
-        $usuario = DB::table('usuario')->where('id', $id)->first();
+        $usuario = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id', $id)->first();
         if (!$usuario) return response()->json(['message' => 'Usuario no encontrado'], 404);
 
         $nuevoEstado = $usuario->estado === 'Activo' ? 'Inactivo' : 'Activo';
-        DB::table('usuario')->where('id', $id)->update(['estado' => $nuevoEstado]);
+        \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id', $id)->update(['estado' => $nuevoEstado]);
 
         $this->logBitacora($request->user()->id, 'UPDATE', 'Seguridad', "Estado de usuario ID {$id} cambiado a {$nuevoEstado}", $request->ip());
 
@@ -126,10 +128,10 @@ class UsuarioController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $usuario = DB::table('usuario')->where('id', $id)->first();
+        $usuario = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id', $id)->first();
         if (!$usuario) return response()->json(['message' => 'Usuario no encontrado'], 404);
 
-        DB::table('usuario')->where('id', $id)->delete();
+        \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id', $id)->delete();
         
         $this->logBitacora($request->user()->id, 'DELETE', 'Seguridad', "Usuario ID {$id} eliminado", $request->ip());
 
@@ -138,12 +140,12 @@ class UsuarioController extends Controller
 
     public function getRoles()
     {
-        return response()->json(DB::table('rol')->select('id', 'nombre')->get());
+        return response()->json(\App\Models\P1_GestionDeSeguridadYAcceso\Rol::select('id', 'nombre')->get());
     }
 
     private function logBitacora($idUsuario, $accion, $modulo, $descripcion, $ip)
     {
-        DB::table('bitacora')->insert([
+        \App\Models\P1_GestionDeSeguridadYAcceso\Bitacora::insert([
             'id_usuario' => $idUsuario,
             'accion' => $accion,
             'modulo' => $modulo,

@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P3_GestionAcademicaBase\CU9_GestionarAulas;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +11,7 @@ class AulaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('aula')->select('id', 'aula_nro', 'capacidad', 'tipo_aula');
+        $query = \App\Models\P3_GestionAcademicaBase\Aula::select('id', 'aula_nro', 'capacidad', 'tipo_aula');
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
@@ -28,7 +30,7 @@ class AulaController extends Controller
             'tipo_aula' => 'nullable|string|max:50',
         ]);
 
-        DB::table('aula')->insert([
+        \App\Models\P3_GestionAcademicaBase\Aula::insert([
             'aula_nro' => $request->aula_nro,
             'capacidad' => $request->capacidad,
             'tipo_aula' => $request->tipo_aula,
@@ -47,7 +49,7 @@ class AulaController extends Controller
             'tipo_aula' => 'nullable|string|max:50',
         ]);
 
-        DB::table('aula')->where('id', $id)->update([
+        \App\Models\P3_GestionAcademicaBase\Aula::where('id', $id)->update([
             'aula_nro' => $request->aula_nro,
             'capacidad' => $request->capacidad,
             'tipo_aula' => $request->tipo_aula,
@@ -59,7 +61,7 @@ class AulaController extends Controller
 
     public function destroy($id)
     {
-        DB::table('aula')->where('id', $id)->delete();
+        \App\Models\P3_GestionAcademicaBase\Aula::where('id', $id)->delete();
         return response()->json(['message' => 'Aula eliminada.']);
     }
 }

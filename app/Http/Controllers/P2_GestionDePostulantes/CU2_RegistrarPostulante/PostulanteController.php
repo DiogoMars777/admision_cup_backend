@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P2_GestionDePostulantes\CU2_RegistrarPostulante;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +12,7 @@ class PostulanteController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('postulante')
+        $query = \App\Models\P2_GestionDePostulantes\Postulante::query()
             ->join('persona', 'postulante.id_persona', '=', 'persona.id')
             ->select(
                 'persona.id',
@@ -18,6 +20,7 @@ class PostulanteController extends Controller
                 'persona.nombre',
                 'persona.sexo',
                 'persona.telefono',
+                'persona.correo',
                 'postulante.fecha_nac',
                 'postulante.direccion',
                 'postulante.colegio',
@@ -35,7 +38,7 @@ class PostulanteController extends Controller
 
         // Agregar carreras y modalidades de cada postulante
         foreach ($postulantes as $postulante) {
-            $carreras = DB::table('postulante_carrera')
+            $carreras = \App\Models\P2_GestionDePostulantes\PostulanteCarrera::query()
                 ->join('carrera', 'postulante_carrera.id_carrera', '=', 'carrera.id')
                 ->leftJoin('modalidad', 'postulante_carrera.id_modalidad', '=', 'modalidad.id')
                 ->where('postulante_carrera.id_postulante', $postulante->id)
@@ -69,7 +72,7 @@ class PostulanteController extends Controller
     public function getPendientesPago(Request $request)
     {
         // Traer todos los postulantes
-        $postulantes = DB::table('postulante')
+        $postulantes = \App\Models\P2_GestionDePostulantes\Postulante::query()
             ->join('persona', 'postulante.id_persona', '=', 'persona.id')
             ->leftJoin('usuario', 'usuario.id_persona', '=', 'persona.id')
             ->select(
@@ -78,7 +81,7 @@ class PostulanteController extends Controller
                 'persona.nombre',
                 'persona.telefono',
                 'postulante.colegio',
-                'usuario.email',
+                'persona.correo',
                 'usuario.estado as estado_usuario'
             )
             ->orderBy('persona.nombre')
@@ -87,16 +90,16 @@ class PostulanteController extends Controller
         $resultado = [];
         foreach ($postulantes as $p) {
             // Contar requisitos totales y entregados
-            $totalReqs = DB::table('postulante_requisito')
+            $totalReqs = \App\Models\P2_GestionDePostulantes\PostulanteRequisito::query()
                 ->where('id_postulante', $p->id)->count();
-            $entregados = DB::table('postulante_requisito')
+            $entregados = \App\Models\P2_GestionDePostulantes\PostulanteRequisito::query()
                 ->where('id_postulante', $p->id)
                 ->where('estado', 'Entregado')->count();
 
             // Solo incluir si tiene requisitos Y todos están entregados
             if ($totalReqs > 0 && $totalReqs === $entregados) {
                 // Buscar si ya tiene pago
-                $pago = DB::table('pago')->where('id_postulante', $p->id)->latest('fecha')->first();
+                $pago = \App\Models\P2_GestionDePostulantes\Pago::where('id_postulante', $p->id)->latest('fecha')->first();
 
                 $resultado[] = [
                     'id'           => $p->id,
@@ -104,7 +107,7 @@ class PostulanteController extends Controller
                     'nombre'       => $p->nombre,
                     'telefono'     => $p->telefono,
                     'colegio'      => $p->colegio,
-                    'email'        => $p->email,
+                    'correo'       => $p->correo,
                     'estado_usuario' => $p->estado_usuario,
                     'tiene_pago'   => !is_null($pago),
                     'pago'         => $pago,
@@ -136,16 +139,19 @@ class PostulanteController extends Controller
 
         DB::beginTransaction();
         try {
-            $personaId = DB::table('persona')->insertGetId([
+            $correoGenerado = $request->email ?: strtolower(str_replace(' ', '', explode(' ', $request->nombre)[0])) . $request->ci . '@cup.edu.bo';
+
+            $personaId = \App\Models\Shared\Persona::insertGetId([
                 'ci' => $request->ci,
                 'nombre' => $request->nombre,
                 'sexo' => $request->sexo,
                 'telefono' => $request->telefono,
+                'correo' => $correoGenerado,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            DB::table('postulante')->insert([
+            \App\Models\P2_GestionDePostulantes\Postulante::insert([
                 'id_persona' => $personaId,
                 'fecha_nac' => $request->fecha_nac,
                 'direccion' => $request->direccion,
@@ -165,7 +171,7 @@ class PostulanteController extends Controller
             }
 
             // Auto-asignar todos los requisitos activos (tipo Postulante) al nuevo postulante
-            $requisitos = DB::table('requisito')
+            $requisitos = \App\Models\P2_GestionDePostulantes\Requisito::query()
                 ->where('estado', 'Activo')
                 ->where(function($q) {
                     $q->where('tipo_requisito', 'Postulante')
@@ -173,7 +179,7 @@ class PostulanteController extends Controller
                 })
                 ->get();
             foreach ($requisitos as $req) {
-                DB::table('postulante_requisito')->insert([
+                \App\Models\P2_GestionDePostulantes\PostulanteRequisito::insert([
                     'id_postulante' => $personaId,
                     'id_requisito'  => $req->id,
                     'fecha_asignacion' => now()->format('Y-m-d'),
@@ -183,21 +189,7 @@ class PostulanteController extends Controller
                 ]);
             }
 
-            // Crear cuenta de usuario inactiva (se activará al pagar)
-            $rolPostulanteId = DB::table('rol')->where('nombre', 'Postulante')->value('id');
-            if ($rolPostulanteId) {
-                // Usar correo proveído o generar uno genérico para la demo si no hay
-                $correoGenerado = strtolower(str_replace(' ', '', explode(' ', $request->nombre)[0])) . $personaId . '@cup.edu.bo';
-                DB::table('usuario')->insert([
-                    'id_persona' => $personaId,
-                    'id_rol' => $rolPostulanteId,
-                    'email' => $request->email ?: $correoGenerado,
-                    'password' => Hash::make($request->ci), // Contraseña inicial es el CI
-                    'estado' => 'Inactivo', // Queda Inactivo hasta procesar el pago
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+            // La cuenta de usuario ya no se crea aquí, se creará al realizar el pago.
 
             DB::commit();
             return response()->json(['message' => 'Postulante registrado exitosamente.']);
@@ -224,7 +216,7 @@ class PostulanteController extends Controller
         DB::beginTransaction();
         try {
             // Actualizar persona
-            DB::table('persona')->where('id', $id)->update([
+            \App\Models\Shared\Persona::where('id', $id)->update([
                 'nombre' => $request->nombre,
                 'sexo' => $request->sexo,
                 'telefono' => $request->telefono,
@@ -232,7 +224,7 @@ class PostulanteController extends Controller
             ]);
 
             // Actualizar postulante con turno y modalidad preferida
-            DB::table('postulante')->where('id_persona', $id)->update([
+            \App\Models\P2_GestionDePostulantes\Postulante::where('id_persona', $id)->update([
                 'fecha_nac' => $request->fecha_nac,
                 'direccion' => $request->direccion,
                 'colegio' => $request->colegio,
@@ -242,7 +234,7 @@ class PostulanteController extends Controller
             ]);
 
             // Limpiar carreras anteriores y re-insertar
-            DB::table('postulante_carrera')->where('id_postulante', $id)->delete();
+            \App\Models\P2_GestionDePostulantes\PostulanteCarrera::where('id_postulante', $id)->delete();
 
             // Guardar Carrera 1
             if ($request->carrera1 && $request->modalidad1) {
@@ -264,9 +256,9 @@ class PostulanteController extends Controller
 
     public function destroy($id)
     {
-        DB::table('postulante_carrera')->where('id_postulante', $id)->delete();
-        DB::table('postulante')->where('id_persona', $id)->delete();
-        DB::table('persona')->where('id', $id)->delete();
+        \App\Models\P2_GestionDePostulantes\PostulanteCarrera::where('id_postulante', $id)->delete();
+        \App\Models\P2_GestionDePostulantes\Postulante::where('id_persona', $id)->delete();
+        \App\Models\Shared\Persona::where('id', $id)->delete();
         return response()->json(['message' => 'Postulante eliminado.']);
     }
 
@@ -275,13 +267,13 @@ class PostulanteController extends Controller
         DB::beginTransaction();
         try {
             // Verificar si el usuario ya está activo
-            $usuarioExistente = DB::table('usuario')->where('id_persona', $id)->first();
+            $usuarioExistente = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $id)->first();
             if ($usuarioExistente && $usuarioExistente->estado === 'Activo') {
                 return response()->json(['message' => 'El postulante ya tiene una cuenta activa.'], 400);
             }
 
             // Generar Comprobante simulado
-            $comprobanteId = DB::table('comprobante')->insertGetId([
+            $comprobanteId = \App\Models\P2_GestionDePostulantes\Comprobante::insertGetId([
                 'nro_comprobante' => 'COMP-' . strtoupper(uniqid()),
                 'fecha_emision' => now()->format('Y-m-d'),
                 'created_at' => now(),
@@ -289,7 +281,7 @@ class PostulanteController extends Controller
             ]);
             
             // Registrar el Pago
-            DB::table('pago')->insert([
+            \App\Models\P2_GestionDePostulantes\Pago::insert([
                 'id_postulante' => $id,
                 'id_comprobante' => $comprobanteId,
                 'monto' => 300.00,
@@ -301,14 +293,86 @@ class PostulanteController extends Controller
                 'updated_at' => now()
             ]);
 
-            // Habilitar Usuario y enviarle sus credenciales
-            if ($usuarioExistente) {
-                DB::table('usuario')->where('id_persona', $id)->update([
+            // Crear y habilitar Usuario y enviarle sus credenciales
+            $persona = \App\Models\Shared\Persona::where('id', $id)->first();
+            if (!$usuarioExistente) {
+                $rolPostulanteId = \App\Models\P1_GestionDeSeguridadYAcceso\Rol::where('nombre', 'Postulante')->value('id');
+                
+                \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::insert([
+                    'id_persona' => $id,
+                    'id_rol' => $rolPostulanteId,
+                    'email' => $persona->correo,
+                    'password' => Hash::make($persona->ci),
+                    'estado' => 'Activo',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $id)->update([
                     'estado' => 'Activo',
                     'updated_at' => now(),
                 ]);
-                $usuario = DB::table('usuario')->where('id_persona', $id)->first();
-                $persona = DB::table('persona')->where('id', $id)->first();
+            }
+            $usuario = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $id)->first();
+
+            // Descontar cupo de la carrera elegida (prioridad 1)
+            $carreraElegida = \App\Models\P2_GestionDePostulantes\PostulanteCarrera::where('id_postulante', $id)->orderBy('prioridad')->first();
+                if ($carreraElegida) {
+                    $gestionActiva = \App\Models\P3_GestionAcademicaBase\GestionAcademica::where('estado', 'Activo')->first();
+                    if ($gestionActiva) {
+                        \App\Models\P3_GestionAcademicaBase\CupoCarrera::query()
+                            ->where('id_carrera', $carreraElegida->id_carrera)
+                            ->where('id_gestionacademica', $gestionActiva->id)
+                            ->where('cupo_disp', '>', 0)
+                            ->decrement('cupo_disp');
+
+                        // Asignar la gestión activa al postulante
+                        \App\Models\P2_GestionDePostulantes\Postulante::where('id_persona', $id)
+                            ->update(['id_gestionacademica' => $gestionActiva->id]);
+
+                        // 1. Registrar al postulante en la tabla Admisión (Vincular postulante y gestión)
+                        $existeAdmision = DB::table('admision')
+                            ->where('id_postulante', $id)
+                            ->where('id_gestionacademica', $gestionActiva->id)
+                            ->exists();
+                            
+                        if (!$existeAdmision) {
+                            DB::table('admision')->insert([
+                                'id_postulante' => $id,
+                                'id_gestionacademica' => $gestionActiva->id,
+                                'id_carrera' => $carreraElegida->id_carrera,
+                                'estado' => 'Registrado',
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+
+                        // 2. Generar automáticamente los registros de NOTA para este postulante
+                        // vinculando: programacion_evaluacion, materia y postulante
+                        $programaciones = DB::table('programacion_evaluacion')
+                            ->where('id_gestionacademica', $gestionActiva->id)
+                            ->get();
+
+                        foreach ($programaciones as $prog) {
+                            $existeNota = DB::table('nota')
+                                ->where('id_postulante', $id)
+                                ->where('id_programacion_evaluacion', $prog->id)
+                                ->exists();
+
+                            if (!$existeNota) {
+                                DB::table('nota')->insert([
+                                    'id_postulante' => $id,
+                                    'id_programacion_evaluacion' => $prog->id,
+                                    'id_materia' => $prog->id_materia,
+                                    'puntaje_obtenido' => null,
+                                    'estado' => 'Pendiente',
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            }
+                        }
+                    }
+                }
 
                 // Enviar el correo real con las credenciales
                 try {
@@ -338,7 +402,6 @@ class PostulanteController extends Controller
                     \Illuminate\Support\Facades\Log::error("Error enviando correo a {$usuario->email}: " . $mailError->getMessage());
                     // Continuamos con el proceso aunque el correo falle
                 }
-            }
 
             DB::commit();
             return response()->json(['message' => 'Pago procesado y usuario habilitado exitosamente.']);
@@ -356,9 +419,9 @@ class PostulanteController extends Controller
     private function guardarCarrera(int $postulantId, string $carreraNombre, string $modalidadNombre, int $prioridad): void
     {
         // Buscar o crear carrera
-        $carreraId = DB::table('carrera')->where('nombre', $carreraNombre)->value('id');
+        $carreraId = \App\Models\P3_GestionAcademicaBase\Carrera::where('nombre', $carreraNombre)->value('id');
         if (!$carreraId) {
-            $carreraId = DB::table('carrera')->insertGetId([
+            $carreraId = \App\Models\P3_GestionAcademicaBase\Carrera::insertGetId([
                 'nombre' => $carreraNombre,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -366,9 +429,9 @@ class PostulanteController extends Controller
         }
 
         // Buscar o crear modalidad
-        $modalidadId = DB::table('modalidad')->where('nombre', $modalidadNombre)->value('id');
+        $modalidadId = \App\Models\P3_GestionAcademicaBase\Modalidad::where('nombre', $modalidadNombre)->value('id');
         if (!$modalidadId) {
-            $modalidadId = DB::table('modalidad')->insertGetId([
+            $modalidadId = \App\Models\P3_GestionAcademicaBase\Modalidad::insertGetId([
                 'nombre' => $modalidadNombre,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -376,12 +439,12 @@ class PostulanteController extends Controller
         }
 
         // Asegurar relación en clase intermedia modalidad_carrera
-        $existeRelacion = DB::table('modalidad_carrera')
+        $existeRelacion = \App\Models\P3_GestionAcademicaBase\ModalidadCarrera::query()
             ->where('id_carrera', $carreraId)
             ->where('id_modalidad', $modalidadId)
             ->exists();
         if (!$existeRelacion) {
-            DB::table('modalidad_carrera')->insert([
+            \App\Models\P3_GestionAcademicaBase\ModalidadCarrera::insert([
                 'id_carrera' => $carreraId,
                 'id_modalidad' => $modalidadId,
                 'created_at' => now(),
@@ -390,7 +453,7 @@ class PostulanteController extends Controller
         }
 
         // Insertar en postulante_carrera
-        DB::table('postulante_carrera')->insert([
+        \App\Models\P2_GestionDePostulantes\PostulanteCarrera::insert([
             'id_postulante' => $postulantId,
             'id_carrera' => $carreraId,
             'id_modalidad' => $modalidadId,

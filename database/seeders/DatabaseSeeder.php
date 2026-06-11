@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             'nombre' => 'Diogo Mars',
             'sexo' => 'M',
             'telefono' => '70000000',
+            'correo' => 'diogomars2020@gmail.com',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -53,7 +54,7 @@ class DatabaseSeeder extends Seeder
             'id_persona' => $personaId,
             'id_rol' => $rolId,
             'email' => 'diogomars2020@gmail.com',
-            'password' => Hash::make('admin123'),
+            'password' => Hash::make('12345678'), // CI como contraseña
             'estado' => 'Activo',
             'created_at' => now(),
             'updated_at' => now(),

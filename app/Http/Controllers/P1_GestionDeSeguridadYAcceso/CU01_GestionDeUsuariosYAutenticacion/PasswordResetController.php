@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P1_GestionDeSeguridadYAcceso\CU01_GestionDeUsuariosYAutenticacion;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -8,7 +10,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\VerificationCodeMail;
-use App\Models\User;
+use App\Models\P1_GestionDeSeguridadYAcceso\Usuario;
+use App\Models\P1_GestionDeSeguridadYAcceso\PasswordResetToken;
 
 class PasswordResetController extends Controller
 {
@@ -31,7 +34,7 @@ class PasswordResetController extends Controller
             ], 429);
         }
 
-        $user = User::where('email', $request->email)->first();
+        $user = Usuario::where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json([
@@ -43,7 +46,7 @@ class PasswordResetController extends Controller
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         // Guardar en password_reset_tokens (expira en 15 min)
-        DB::table('password_reset_tokens')->updateOrInsert(
+        PasswordResetToken::updateOrInsert(
             ['email' => $request->email],
             [
                 'token'      => $code,
@@ -69,7 +72,7 @@ class PasswordResetController extends Controller
             'code'  => 'required|string|size:6',
         ]);
 
-        $record = DB::table('password_reset_tokens')
+        $record = PasswordResetToken::query()
             ->where('email', $request->email)
             ->where('token', $request->code)
             ->first();
@@ -83,7 +86,7 @@ class PasswordResetController extends Controller
         // Verificar que no hayan pasado más de 15 minutos
         $createdAt = \Carbon\Carbon::parse($record->created_at);
         if ($createdAt->diffInMinutes(now()) > 15) {
-            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            PasswordResetToken::where('email', $request->email)->delete();
             return response()->json([
                 'message' => 'El código ha expirado. Solicita uno nuevo.'
             ], 422);
@@ -105,7 +108,7 @@ class PasswordResetController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        $record = DB::table('password_reset_tokens')
+        $record = PasswordResetToken::query()
             ->where('email', $request->email)
             ->where('token', $request->code)
             ->first();
@@ -118,19 +121,19 @@ class PasswordResetController extends Controller
 
         $createdAt = \Carbon\Carbon::parse($record->created_at);
         if ($createdAt->diffInMinutes(now()) > 15) {
-            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            PasswordResetToken::where('email', $request->email)->delete();
             return response()->json([
                 'message' => 'El código ha expirado. Solicita uno nuevo.'
             ], 422);
         }
 
         // Actualizar contraseña
-        User::where('email', $request->email)->update([
+        Usuario::where('email', $request->email)->update([
             'password' => Hash::make($request->password),
         ]);
 
         // Eliminar el token usado
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        PasswordResetToken::where('email', $request->email)->delete();
 
         return response()->json([
             'message' => 'Contraseña actualizada correctamente.'

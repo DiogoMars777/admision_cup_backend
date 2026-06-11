@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P1_GestionDeSeguridadYAcceso\CU16_GestionarBitacora;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +11,7 @@ class BitacoraController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('bitacora')
+        $query = \App\Models\P1_GestionDeSeguridadYAcceso\Bitacora::query()
             ->join('usuario', 'bitacora.id_usuario', '=', 'usuario.id')
             ->join('persona', 'usuario.id_persona', '=', 'persona.id')
             ->join('rol', 'usuario.id_rol', '=', 'rol.id')
@@ -44,16 +46,16 @@ class BitacoraController extends Controller
 
     public function stats()
     {
-        $totalMes = DB::table('bitacora')
+        $totalMes = \App\Models\P1_GestionDeSeguridadYAcceso\Bitacora::query()
             ->whereMonth('fecha', now()->month)
             ->whereYear('fecha', now()->year)
             ->count();
 
-        $hoy = DB::table('bitacora')
+        $hoy = \App\Models\P1_GestionDeSeguridadYAcceso\Bitacora::query()
             ->where('fecha', now()->toDateString())
             ->count();
 
-        $usuariosActivos = DB::table('usuario')
+        $usuariosActivos = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::query()
             ->where('estado', 'Activo')
             ->count();
 

@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P3_GestionAcademicaBase\CU7_GestionarDocentes;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +14,7 @@ class AspiranteDocenteController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('aspirante_docente')
+        $query = \App\Models\P3_GestionAcademicaBase\AspiranteDocente::query()
             ->join('persona', 'aspirante_docente.id_persona', '=', 'persona.id')
             ->select(
                 'persona.id',
@@ -34,7 +36,7 @@ class AspiranteDocenteController extends Controller
         $aspirantes = $query->orderBy('persona.id', 'desc')->get();
 
         foreach ($aspirantes as $aspirante) {
-            $postulaciones = DB::table('postulacion_docente')
+            $postulaciones = \App\Models\P3_GestionAcademicaBase\PostulacionDocente::query()
                 ->join('materia', 'postulacion_docente.id_materia', '=', 'materia.id')
                 ->where('postulacion_docente.id_aspirante_docente', $aspirante->id)
                 ->select(
@@ -48,7 +50,7 @@ class AspiranteDocenteController extends Controller
             
             $aspirante->materias = $postulaciones;
             $aspirante->cantidad_materias = count($postulaciones);
-            $aspirante->email = DB::table('usuario')->where('id_persona', $aspirante->id)->value('email') ?? '';
+            $aspirante->email = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $aspirante->id)->value('email') ?? '';
         }
 
         return response()->json($aspirantes);
@@ -56,7 +58,7 @@ class AspiranteDocenteController extends Controller
 
     public function getMateriasPostuladas($id)
     {
-        $postulaciones = DB::table('postulacion_docente')
+        $postulaciones = \App\Models\P3_GestionAcademicaBase\PostulacionDocente::query()
             ->join('materia', 'postulacion_docente.id_materia', '=', 'materia.id')
             ->where('postulacion_docente.id_aspirante_docente', $id)
             ->select(
@@ -73,7 +75,7 @@ class AspiranteDocenteController extends Controller
 
     public function getRequisitosMateria($idAspirante, $idMateria)
     {
-        $requisitos = DB::table('materia_requisito')
+        $requisitos = \App\Models\P3_GestionAcademicaBase\MateriaRequisito::query()
             ->join('requisito', 'materia_requisito.id_requisito', '=', 'requisito.id')
             ->leftJoin('aspirante_requisito', function ($join) use ($idAspirante) {
                 $join->on('materia_requisito.id', '=', 'aspirante_requisito.id_materia_requisito')
@@ -102,7 +104,7 @@ class AspiranteDocenteController extends Controller
             'cumplido' => 'required|boolean'
         ]);
 
-        DB::table('aspirante_requisito')->updateOrInsert(
+        \App\Models\P3_GestionAcademicaBase\AspiranteRequisito::updateOrInsert(
             [
                 'id_aspirante' => $request->id_aspirante,
                 'id_materia_requisito' => $request->id_materia_requisito
@@ -122,15 +124,15 @@ class AspiranteDocenteController extends Controller
 
     private function actualizarEstadoPostulacion($idAspirante, $idMateriaRequisito)
     {
-        $idMateria = DB::table('materia_requisito')->where('id', $idMateriaRequisito)->value('id_materia');
+        $idMateria = \App\Models\P3_GestionAcademicaBase\MateriaRequisito::where('id', $idMateriaRequisito)->value('id_materia');
         if (!$idMateria) return;
 
-        $requisitos = DB::table('materia_requisito')
+        $requisitos = \App\Models\P3_GestionAcademicaBase\MateriaRequisito::query()
             ->where('id_materia', $idMateria)
             ->where('obligatorio', true)
             ->get();
 
-        $cumplidos = DB::table('aspirante_requisito')
+        $cumplidos = \App\Models\P3_GestionAcademicaBase\AspiranteRequisito::query()
             ->join('materia_requisito', 'aspirante_requisito.id_materia_requisito', '=', 'materia_requisito.id')
             ->where('aspirante_requisito.id_aspirante', $idAspirante)
             ->where('materia_requisito.id_materia', $idMateria)
@@ -145,32 +147,32 @@ class AspiranteDocenteController extends Controller
             $estado = 'En revisión';
         }
 
-        $postulacionActual = DB::table('postulacion_docente')
+        $postulacionActual = \App\Models\P3_GestionAcademicaBase\PostulacionDocente::query()
             ->where('id_aspirante_docente', $idAspirante)
             ->where('id_materia', $idMateria)
             ->first();
 
         if (!$postulacionActual) return;
 
-        DB::table('postulacion_docente')
+        \App\Models\P3_GestionAcademicaBase\PostulacionDocente::query()
             ->where('id', $postulacionActual->id)
             ->update(['estado' => $estado]);
 
         // Si la materia acaba de ser aprobada y el usuario ya es Docente Oficial
         if ($estado === 'Aprobada' && $postulacionActual->estado !== 'Aprobada') {
-            $aspirante = DB::table('aspirante_docente')->where('id_persona', $idAspirante)->first();
+            $aspirante = \App\Models\P3_GestionAcademicaBase\AspiranteDocente::where('id_persona', $idAspirante)->first();
             
             if ($aspirante && $aspirante->estado === 'Docente Oficial') {
                 // Registrar la materia en la tabla docente_materia
-                DB::table('docente_materia')->updateOrInsert(
+                \App\Models\P3_GestionAcademicaBase\DocenteMateria::updateOrInsert(
                     ['id_docente' => $idAspirante, 'id_materia' => $idMateria],
                     ['created_at' => now(), 'updated_at' => now()]
                 );
 
                 // Enviar correo de nueva materia asignada (sin contraseñas)
-                $usuario = DB::table('usuario')->where('id_persona', $idAspirante)->first();
-                $persona = DB::table('persona')->where('id', $idAspirante)->first();
-                $materiaObj = DB::table('materia')->where('id', $idMateria)->first();
+                $usuario = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $idAspirante)->first();
+                $persona = \App\Models\Shared\Persona::where('id', $idAspirante)->first();
+                $materiaObj = \App\Models\P3_GestionAcademicaBase\Materia::where('id', $idMateria)->first();
 
                 if ($usuario && $persona && $materiaObj) {
                     try {
@@ -207,7 +209,7 @@ class AspiranteDocenteController extends Controller
             'id_materia' => 'required|integer'
         ]);
 
-        $existe = DB::table('postulacion_docente')
+        $existe = \App\Models\P3_GestionAcademicaBase\PostulacionDocente::query()
             ->where('id_aspirante_docente', $request->id_aspirante)
             ->where('id_materia', $request->id_materia)
             ->exists();
@@ -216,7 +218,7 @@ class AspiranteDocenteController extends Controller
             return response()->json(['message' => 'Ya está postulado a esta materia'], 400);
         }
 
-        DB::table('postulacion_docente')->insert([
+        \App\Models\P3_GestionAcademicaBase\PostulacionDocente::insert([
             'id_aspirante_docente' => $request->id_aspirante,
             'id_materia' => $request->id_materia,
             'fecha_postulacion' => now(),
@@ -242,16 +244,17 @@ class AspiranteDocenteController extends Controller
 
         DB::beginTransaction();
         try {
-            $personaId = DB::table('persona')->insertGetId([
+            $personaId = \App\Models\Shared\Persona::insertGetId([
                 'ci' => $request->ci,
                 'nombre' => $request->nombre,
                 'sexo' => $request->sexo ?? 'M',
                 'telefono' => $request->telefono,
+                'correo' => $request->email,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
 
-            DB::table('aspirante_docente')->insert([
+            \App\Models\P3_GestionAcademicaBase\AspiranteDocente::insert([
                 'id_persona' => $personaId,
                 'fecha_registro' => now(),
                 'grado_academico' => $request->grado_academico,
@@ -261,8 +264,8 @@ class AspiranteDocenteController extends Controller
                 'updated_at' => now()
             ]);
 
-            $rolAspirante = DB::table('rol')->where('nombre', 'Postulante')->value('id'); // O usar un rol específico
-            DB::table('usuario')->insert([
+            $rolAspirante = \App\Models\P1_GestionDeSeguridadYAcceso\Rol::where('nombre', 'Postulante')->value('id'); // O usar un rol específico
+            \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::insert([
                 'id_persona' => $personaId,
                 'id_rol' => $rolAspirante,
                 'email' => $request->email,
@@ -294,21 +297,22 @@ class AspiranteDocenteController extends Controller
 
         DB::beginTransaction();
         try {
-            DB::table('persona')->where('id', $id)->update([
+            \App\Models\Shared\Persona::where('id', $id)->update([
                 'ci' => $request->ci,
                 'nombre' => $request->nombre,
                 'sexo' => $request->sexo ?? 'M',
                 'telefono' => $request->telefono,
+                'correo' => $request->email,
                 'updated_at' => now()
             ]);
 
-            DB::table('aspirante_docente')->where('id_persona', $id)->update([
+            \App\Models\P3_GestionAcademicaBase\AspiranteDocente::where('id_persona', $id)->update([
                 'grado_academico' => $request->grado_academico,
                 'experiencia' => $request->experiencia,
                 'updated_at' => now()
             ]);
 
-            DB::table('usuario')->where('id_persona', $id)->update([
+            \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $id)->update([
                 'email' => $request->email,
                 'updated_at' => now()
             ]);
@@ -326,9 +330,9 @@ class AspiranteDocenteController extends Controller
         DB::beginTransaction();
         try {
             // Se elimina en cascada por la llave foránea en id_persona o lo eliminamos manualmente
-            DB::table('usuario')->where('id_persona', $id)->delete();
-            DB::table('aspirante_docente')->where('id_persona', $id)->delete();
-            DB::table('persona')->where('id', $id)->delete();
+            \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $id)->delete();
+            \App\Models\P3_GestionAcademicaBase\AspiranteDocente::where('id_persona', $id)->delete();
+            \App\Models\Shared\Persona::where('id', $id)->delete();
 
             DB::commit();
             return response()->json(['message' => 'Aspirante eliminado exitosamente']);
@@ -343,24 +347,24 @@ class AspiranteDocenteController extends Controller
         DB::beginTransaction();
         try {
             // 1. Verificar si ya es docente
-            $esDocente = DB::table('docente')->where('id_persona', $id)->exists();
+            $esDocente = \App\Models\P3_GestionAcademicaBase\Docente::where('id_persona', $id)->exists();
             if ($esDocente) {
                 return response()->json(['message' => 'El aspirante ya es docente'], 400);
             }
 
             // Obtener datos del aspirante
-            $aspirante = DB::table('aspirante_docente')->where('id_persona', $id)->first();
+            $aspirante = \App\Models\P3_GestionAcademicaBase\AspiranteDocente::where('id_persona', $id)->first();
             if (!$aspirante) {
                 return response()->json(['message' => 'Aspirante no encontrado'], 404);
             }
 
-            $persona = DB::table('persona')->where('id', $id)->first();
+            $persona = \App\Models\Shared\Persona::where('id', $id)->first();
             if (!$persona) {
                 return response()->json(['message' => 'Persona no encontrada'], 404);
             }
 
             // 1. Verificar automáticamente que al menos UNA materia tiene TODOS sus requisitos obligatorios cumplidos
-            $postulaciones = DB::table('postulacion_docente')
+            $postulaciones = \App\Models\P3_GestionAcademicaBase\PostulacionDocente::query()
                 ->where('id_aspirante_docente', $id)
                 ->get();
 
@@ -370,12 +374,12 @@ class AspiranteDocenteController extends Controller
 
             $materiasAprobadas = [];
             foreach ($postulaciones as $postulacion) {
-                $reqObligatorios = DB::table('materia_requisito')
+                $reqObligatorios = \App\Models\P3_GestionAcademicaBase\MateriaRequisito::query()
                     ->where('id_materia', $postulacion->id_materia)
                     ->where('obligatorio', true)
                     ->count();
 
-                $reqCumplidos = DB::table('aspirante_requisito')
+                $reqCumplidos = \App\Models\P3_GestionAcademicaBase\AspiranteRequisito::query()
                     ->join('materia_requisito', 'aspirante_requisito.id_materia_requisito', '=', 'materia_requisito.id')
                     ->where('aspirante_requisito.id_aspirante', $id)
                     ->where('materia_requisito.id_materia', $postulacion->id_materia)
@@ -387,7 +391,7 @@ class AspiranteDocenteController extends Controller
                 if ($reqObligatorios == 0 || $reqObligatorios == $reqCumplidos) {
                     $materiasAprobadas[] = $postulacion;
                     // Actualizar estado de la postulación a Aprobada
-                    DB::table('postulacion_docente')
+                    \App\Models\P3_GestionAcademicaBase\PostulacionDocente::query()
                         ->where('id', $postulacion->id)
                         ->update(['estado' => 'Aprobada']);
                 }
@@ -398,13 +402,13 @@ class AspiranteDocenteController extends Controller
             }
 
             // 2. Cambiar estado del aspirante a Docente Oficial
-            DB::table('aspirante_docente')->where('id_persona', $id)->update([
+            \App\Models\P3_GestionAcademicaBase\AspiranteDocente::where('id_persona', $id)->update([
                 'estado' => 'Docente Oficial',
                 'updated_at' => now()
             ]);
 
             // 7. Copiar atributos del aspirante_docente a la tabla docente
-            DB::table('docente')->insert([
+            \App\Models\P3_GestionAcademicaBase\Docente::insert([
                 'id_persona' => $id,
                 'grado_academico' => $aspirante->grado_academico ?? 'Licenciatura',
                 'experiencia_docente' => $aspirante->experiencia ?? 0,
@@ -414,21 +418,21 @@ class AspiranteDocenteController extends Controller
 
             // Registrar materias aprobadas en docente_materia
             foreach ($materiasAprobadas as $materia) {
-                DB::table('docente_materia')->updateOrInsert(
+                \App\Models\P3_GestionAcademicaBase\DocenteMateria::updateOrInsert(
                     ['id_docente' => $id, 'id_materia' => $materia->id_materia],
                     ['created_at' => now(), 'updated_at' => now()]
                 );
             }
 
             // 3. Crear/Actualizar usuario: username=CI, password=email(Gmail)
-            $usuario = DB::table('usuario')->where('id_persona', $id)->first();
-            $email = $usuario ? $usuario->email : ($persona->ci . '@cup.edu.bo');
+            $usuario = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $id)->first();
+            $email = $usuario ? $usuario->email : $persona->correo;
 
             // 4. Asignar rol Docente
-            $rolDocente = DB::table('rol')->where('nombre', 'Docente')->value('id');
+            $rolDocente = \App\Models\P1_GestionDeSeguridadYAcceso\Rol::where('nombre', 'Docente')->value('id');
             if (!$rolDocente) {
                 // Crear el rol si no existe
-                $rolDocente = DB::table('rol')->insertGetId([
+                $rolDocente = \App\Models\P1_GestionDeSeguridadYAcceso\Rol::insertGetId([
                     'nombre' => 'Docente',
                     'descripcion' => 'Rol de docente del sistema',
                     'estado' => 'Activo',
@@ -439,7 +443,7 @@ class AspiranteDocenteController extends Controller
 
             if ($usuario) {
                 // Actualizar usuario existente: password = ci del aspirante
-                DB::table('usuario')->where('id_persona', $id)->update([
+                \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_persona', $id)->update([
                     'id_rol' => $rolDocente,
                     'password' => Hash::make($persona->ci),
                     'estado' => 'Activo',
@@ -447,7 +451,7 @@ class AspiranteDocenteController extends Controller
                 ]);
             } else {
                 // Crear usuario nuevo
-                DB::table('usuario')->insert([
+                \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::insert([
                     'id_persona' => $id,
                     'id_rol' => $rolDocente,
                     'email' => $email,
@@ -459,7 +463,7 @@ class AspiranteDocenteController extends Controller
             }
 
             // 5. Enviar correo con credenciales, materias y bienvenida
-            $materiasNombres = DB::table('postulacion_docente')
+            $materiasNombres = \App\Models\P3_GestionAcademicaBase\PostulacionDocente::query()
                 ->join('materia', 'postulacion_docente.id_materia', '=', 'materia.id')
                 ->where('postulacion_docente.id_aspirante_docente', $id)
                 ->where('postulacion_docente.estado', 'Aprobada')

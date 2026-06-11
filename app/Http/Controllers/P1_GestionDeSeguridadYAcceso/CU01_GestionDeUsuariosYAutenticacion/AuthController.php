@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P1_GestionDeSeguridadYAcceso\CU01_GestionDeUsuariosYAutenticacion;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use App\Models\P1_GestionDeSeguridadYAcceso\Usuario;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -87,7 +89,7 @@ class AuthController extends Controller
             ], 429);
         }
 
-        $user = User::where('email', $email)->first();
+        $user = Usuario::where('email', $email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             [$newAttempts, $lockoutSecs] = $this->registerFailedAttempt($email);
@@ -119,7 +121,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Registrar en Bitácora
-        DB::table('bitacora')->insert([
+        \App\Models\P1_GestionDeSeguridadYAcceso\Bitacora::insert([
             'id_usuario' => $user->id,
             'accion' => 'Login',
             'modulo' => 'Seguridad',
@@ -132,8 +134,8 @@ class AuthController extends Controller
         ]);
 
         // Obtener nombre y rol para el frontend
-        $nombre = DB::table('persona')->where('id', $user->id_persona)->value('nombre') ?? 'Usuario';
-        $rol = DB::table('rol')->where('id', $user->id_rol)->value('nombre') ?? 'Desconocido';
+        $nombre = \App\Models\Shared\Persona::where('id', $user->id_persona)->value('nombre') ?? 'Usuario';
+        $rol = \App\Models\P1_GestionDeSeguridadYAcceso\Rol::where('id', $user->id_rol)->value('nombre') ?? 'Desconocido';
         
         $userData = $user->toArray();
         $userData['nombre'] = $nombre;
@@ -167,7 +169,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         if ($user) {
-            DB::table('bitacora')->insert([
+            \App\Models\P1_GestionDeSeguridadYAcceso\Bitacora::insert([
                 'id_usuario' => $user->id,
                 'accion' => 'Logout',
                 'modulo' => 'Seguridad',

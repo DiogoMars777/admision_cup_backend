@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P1_GestionDeSeguridadYAcceso\CU01_GestionDeUsuariosYAutenticacion;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +11,7 @@ class RolController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('rol');
+        $query = \App\Models\P1_GestionDeSeguridadYAcceso\Rol::query();
         if ($request->has('search')) {
             $query->where('nombre', 'ilike', '%' . $request->search . '%')
                   ->orWhere('descripcion', 'ilike', '%' . $request->search . '%');
@@ -24,7 +26,7 @@ class RolController extends Controller
             'descripcion' => 'nullable|string|max:255'
         ]);
 
-        DB::table('rol')->insert([
+        \App\Models\P1_GestionDeSeguridadYAcceso\Rol::insert([
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
             'created_at' => now(),
@@ -41,7 +43,7 @@ class RolController extends Controller
             'descripcion' => 'nullable|string|max:255'
         ]);
 
-        DB::table('rol')->where('id', $id)->update([
+        \App\Models\P1_GestionDeSeguridadYAcceso\Rol::where('id', $id)->update([
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
             'updated_at' => now(),
@@ -53,12 +55,12 @@ class RolController extends Controller
     public function destroy($id)
     {
         // Verificar si hay usuarios usando este rol
-        $usersCount = DB::table('usuario')->where('id_rol', $id)->count();
+        $usersCount = \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::where('id_rol', $id)->count();
         if ($usersCount > 0) {
             return response()->json(['message' => 'No se puede eliminar el rol porque tiene usuarios asignados.'], 400);
         }
 
-        DB::table('rol')->where('id', $id)->delete();
+        \App\Models\P1_GestionDeSeguridadYAcceso\Rol::where('id', $id)->delete();
         return response()->json(['message' => 'Rol eliminado correctamente.']);
     }
 }

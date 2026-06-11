@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\P3_GestionAcademicaBase\CU7_GestionarDocentes;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +12,7 @@ class DocenteController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DB::table('docente')
+        $query = \App\Models\P3_GestionAcademicaBase\Docente::query()
             ->join('persona', 'docente.id_persona', '=', 'persona.id')
             ->select(
                 'persona.id',
@@ -45,7 +47,7 @@ class DocenteController extends Controller
 
         DB::beginTransaction();
         try {
-            $personaId = DB::table('persona')->insertGetId([
+            $personaId = \App\Models\Shared\Persona::insertGetId([
                 'ci' => $request->ci,
                 'nombre' => $request->nombre,
                 'sexo' => $request->sexo,
@@ -54,7 +56,7 @@ class DocenteController extends Controller
                 'updated_at' => now(),
             ]);
 
-            DB::table('docente')->insert([
+            \App\Models\P3_GestionAcademicaBase\Docente::insert([
                 'id_persona' => $personaId,
                 'grado_academico' => $request->grado_academico,
                 'experiencia_docente' => $request->experiencia_docente,
@@ -63,9 +65,9 @@ class DocenteController extends Controller
             ]);
 
             // Crear usuario automáticamente
-            $rolDocente = DB::table('rol')->where('nombre', 'Docente')->first();
+            $rolDocente = \App\Models\P1_GestionDeSeguridadYAcceso\Rol::where('nombre', 'Docente')->first();
             if ($rolDocente) {
-                DB::table('usuario')->insert([
+                \App\Models\P1_GestionDeSeguridadYAcceso\Usuario::insert([
                     'id_persona' => $personaId,
                     'id_rol' => $rolDocente->id,
                     'email' => $request->email,
@@ -95,13 +97,13 @@ class DocenteController extends Controller
 
         DB::beginTransaction();
         try {
-            DB::table('persona')->where('id', $id)->update([
+            \App\Models\Shared\Persona::where('id', $id)->update([
                 'nombre' => $request->nombre,
                 'telefono' => $request->telefono,
                 'updated_at' => now(),
             ]);
 
-            DB::table('docente')->where('id_persona', $id)->update([
+            \App\Models\P3_GestionAcademicaBase\Docente::where('id_persona', $id)->update([
                 'grado_academico' => $request->grado_academico,
                 'experiencia_docente' => $request->experiencia_docente,
                 'updated_at' => now(),
@@ -117,8 +119,8 @@ class DocenteController extends Controller
 
     public function destroy($id)
     {
-        DB::table('docente')->where('id_persona', $id)->delete();
-        DB::table('persona')->where('id', $id)->delete();
+        \App\Models\P3_GestionAcademicaBase\Docente::where('id_persona', $id)->delete();
+        \App\Models\Shared\Persona::where('id', $id)->delete();
         return response()->json(['message' => 'Docente eliminado.']);
     }
 }
