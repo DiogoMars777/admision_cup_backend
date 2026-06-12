@@ -8,14 +8,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void {
 
-        // 36. MODALIDAD
+        // 38. MODALIDAD
         Schema::create('modalidad', function (Blueprint $table) {
             $table->id();
             $table->string('nombre', 100)->unique();
             $table->timestamps();
         });
 
-        // 37. MODALIDAD_CARRERA
+        // 39. MODALIDAD_CARRERA
         Schema::create('modalidad_carrera', function (Blueprint $table) {
             $table->foreignId('id_modalidad')
                 ->constrained('modalidad')

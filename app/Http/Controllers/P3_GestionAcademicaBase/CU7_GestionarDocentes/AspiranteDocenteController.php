@@ -75,11 +75,17 @@ class AspiranteDocenteController extends Controller
 
     public function getRequisitosMateria($idAspirante, $idMateria)
     {
+        $postulacion = \App\Models\P3_GestionAcademicaBase\PostulacionDocente::where('id_aspirante_docente', $idAspirante)
+            ->where('id_materia', $idMateria)
+            ->first();
+            
+        $idPostulacion = $postulacion ? $postulacion->id : 0;
+
         $requisitos = \App\Models\P3_GestionAcademicaBase\MateriaRequisito::query()
             ->join('requisito', 'materia_requisito.id_requisito', '=', 'requisito.id')
-            ->leftJoin('aspirante_requisito', function ($join) use ($idAspirante) {
+            ->leftJoin('aspirante_requisito', function ($join) use ($idPostulacion) {
                 $join->on('materia_requisito.id', '=', 'aspirante_requisito.id_materia_requisito')
-                     ->where('aspirante_requisito.id_aspirante', '=', $idAspirante);
+                     ->where('aspirante_requisito.id_postulacion_docente', '=', $idPostulacion);
             })
             ->where('materia_requisito.id_materia', $idMateria)
             ->select(
@@ -87,9 +93,8 @@ class AspiranteDocenteController extends Controller
                 'requisito.nombre as requisito_nombre',
                 'requisito.descripcion',
                 'materia_requisito.obligatorio',
-                DB::raw('COALESCE(aspirante_requisito.cumplido, false) as cumplido'),
-                DB::raw("COALESCE(aspirante_requisito.estado, 'Pendiente') as estado"),
-                'aspirante_requisito.documento_url'
+                DB::raw('COALESCE(aspirante_requisito.cumple, false) as cumplido'),
+                DB::raw("COALESCE(aspirante_requisito.estado, 'Pendiente') as estado")
             )
             ->get();
             
@@ -104,29 +109,37 @@ class AspiranteDocenteController extends Controller
             'cumplido' => 'required|boolean'
         ]);
 
+        $idMateria = \App\Models\P3_GestionAcademicaBase\MateriaRequisito::where('id', $request->id_materia_requisito)->value('id_materia');
+        
+        $postulacion = \App\Models\P3_GestionAcademicaBase\PostulacionDocente::firstOrCreate([
+            'id_aspirante_docente' => $request->id_aspirante,
+            'id_materia' => $idMateria
+        ], [
+            'fecha_postulacion' => now(),
+            'estado' => 'Pendiente'
+        ]);
+
         \App\Models\P3_GestionAcademicaBase\AspiranteRequisito::updateOrInsert(
             [
-                'id_aspirante' => $request->id_aspirante,
+                'id_postulacion_docente' => $postulacion->id,
                 'id_materia_requisito' => $request->id_materia_requisito
             ],
             [
-                'cumplido' => $request->cumplido,
+                'cumple' => $request->cumplido,
+                'fecha_revision' => now(),
                 'estado' => $request->cumplido ? 'Cumplido' : 'Pendiente',
                 'updated_at' => now()
             ]
         );
 
         // Actualizar estado de la postulación si todos están cumplidos
-        $this->actualizarEstadoPostulacion($request->id_aspirante, $request->id_materia_requisito);
+        $this->actualizarEstadoPostulacion($request->id_aspirante, $postulacion->id, $idMateria);
 
         return response()->json(['message' => 'Requisito actualizado']);
     }
 
-    private function actualizarEstadoPostulacion($idAspirante, $idMateriaRequisito)
+    private function actualizarEstadoPostulacion($idAspirante, $idPostulacion, $idMateria)
     {
-        $idMateria = \App\Models\P3_GestionAcademicaBase\MateriaRequisito::where('id', $idMateriaRequisito)->value('id_materia');
-        if (!$idMateria) return;
-
         $requisitos = \App\Models\P3_GestionAcademicaBase\MateriaRequisito::query()
             ->where('id_materia', $idMateria)
             ->where('obligatorio', true)
@@ -134,10 +147,10 @@ class AspiranteDocenteController extends Controller
 
         $cumplidos = \App\Models\P3_GestionAcademicaBase\AspiranteRequisito::query()
             ->join('materia_requisito', 'aspirante_requisito.id_materia_requisito', '=', 'materia_requisito.id')
-            ->where('aspirante_requisito.id_aspirante', $idAspirante)
+            ->where('aspirante_requisito.id_postulacion_docente', $idPostulacion)
             ->where('materia_requisito.id_materia', $idMateria)
             ->where('materia_requisito.obligatorio', true)
-            ->where('aspirante_requisito.cumplido', true)
+            ->where('aspirante_requisito.cumple', true)
             ->count();
 
         $estado = 'En preparación';
@@ -381,10 +394,10 @@ class AspiranteDocenteController extends Controller
 
                 $reqCumplidos = \App\Models\P3_GestionAcademicaBase\AspiranteRequisito::query()
                     ->join('materia_requisito', 'aspirante_requisito.id_materia_requisito', '=', 'materia_requisito.id')
-                    ->where('aspirante_requisito.id_aspirante', $id)
+                    ->where('aspirante_requisito.id_postulacion_docente', $postulacion->id)
                     ->where('materia_requisito.id_materia', $postulacion->id_materia)
                     ->where('materia_requisito.obligatorio', true)
-                    ->where('aspirante_requisito.cumplido', true)
+                    ->where('aspirante_requisito.cumple', true)
                     ->count();
 
                 // Si no hay requisitos obligatorios o todos están cumplidos → aprobada

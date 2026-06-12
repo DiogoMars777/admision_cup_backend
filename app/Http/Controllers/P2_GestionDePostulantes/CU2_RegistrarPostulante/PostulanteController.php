@@ -285,7 +285,7 @@ class PostulanteController extends Controller
                 'id_postulante' => $id,
                 'id_comprobante' => $comprobanteId,
                 'monto' => 300.00,
-                'metodo_pago' => 'Pasarela Virtual',
+                'modalidad_pago' => 'Pasarela Virtual',
                 'codigo_transaccion' => 'TXN-' . rand(10000, 99999),
                 'estado' => 'Procesado',
                 'fecha' => now()->format('Y-m-d'),

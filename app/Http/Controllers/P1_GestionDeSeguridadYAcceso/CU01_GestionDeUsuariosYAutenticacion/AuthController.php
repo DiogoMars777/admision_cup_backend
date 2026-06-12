@@ -134,11 +134,13 @@ class AuthController extends Controller
         ]);
 
         // Obtener nombre y rol para el frontend
-        $nombre = \App\Models\Shared\Persona::where('id', $user->id_persona)->value('nombre') ?? 'Usuario';
+        $persona = \App\Models\Shared\Persona::where('id', $user->id_persona)->first();
         $rol = \App\Models\P1_GestionDeSeguridadYAcceso\Rol::where('id', $user->id_rol)->value('nombre') ?? 'Desconocido';
         
         $userData = $user->toArray();
-        $userData['nombre'] = $nombre;
+        $userData['nombre'] = $persona ? $persona->nombre : 'Usuario';
+        $userData['ci'] = $persona ? $persona->ci : 'N/A';
+        $userData['telefono'] = $persona ? $persona->telefono : 'N/A';
         $userData['rol'] = $rol;
 
         return response()->json([

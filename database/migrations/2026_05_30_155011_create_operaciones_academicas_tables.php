@@ -29,13 +29,22 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 21. HORARIO
-        Schema::create('horario', function (Blueprint $table) {
+        // 21. GRUPO MATERIA
+        Schema::create('grupo_materia', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_grupo')->constrained('grupo')->onDelete('cascade');
-            $table->foreignId('id_docente')->constrained('persona');
-            $table->foreignId('id_materia')->constrained('materia');
-            $table->foreignId('id_aula')->constrained('aula');
+            $table->foreignId('id_materia')->constrained('materia')->onDelete('cascade');
+            $table->foreignId('id_docente')->constrained('persona')->onDelete('cascade');
+            $table->timestamps();
+            
+            $table->unique(['id_grupo', 'id_materia']);
+        });
+
+        // 22. HORARIO
+        Schema::create('horario', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('id_grupo_materia')->constrained('grupo_materia')->onDelete('cascade');
+            $table->foreignId('id_aula')->constrained('aula')->onDelete('cascade');
             $table->string('dia', 20);
             $table->time('hora_ini');
             $table->time('hora_fin');
@@ -43,7 +52,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 22. REQUISITO
+        // 23. REQUISITO
         Schema::create('requisito', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_abministrador')->constrained('persona');
@@ -54,7 +63,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 23. POSTULANTE_REQUISITO
+        // 24. POSTULANTE_REQUISITO
         Schema::create('postulante_requisito', function (Blueprint $table) {
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
             $table->foreignId('id_requisito')->constrained('requisito')->onDelete('cascade');
@@ -65,13 +74,13 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 24. PAGO
+        // 25. PAGO
         Schema::create('pago', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
             $table->foreignId('id_comprobante')->constrained('comprobante');
             $table->decimal('monto', 10, 2);
-            $table->string('metodo_pago', 50)->nullable();
+            $table->string('modalidad_pago', 50)->nullable();
             $table->string('codigo_transaccion', 100)->nullable();
             $table->string('estado', 20)->default('Procesado');
             $table->date('fecha');
@@ -84,6 +93,7 @@ return new class extends Migration {
         Schema::dropIfExists('postulante_requisito');
         Schema::dropIfExists('requisito');
         Schema::dropIfExists('horario');
+        Schema::dropIfExists('grupo_materia');
         Schema::dropIfExists('postulante_grupo');
         Schema::dropIfExists('grupo');
     }

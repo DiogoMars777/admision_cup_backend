@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        // 25. EVALUACION
+        // 26. EVALUACION
         Schema::create('evaluacion', function (Blueprint $table) {
             $table->id();
             $table->string('nombre_eva', 100);
@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 25.5 PROGRAMACION_EVALUACION
+        // 27. PROGRAMACION_EVALUACION
         Schema::create('programacion_evaluacion', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_evaluacion')->constrained('evaluacion')->onDelete('cascade');
@@ -25,7 +25,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 26. NOTA
+        // 28. NOTA
         Schema::create('nota', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
@@ -36,19 +36,25 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 27. ASISTENCIA
+        // 29. ASISTENCIA
         Schema::create('asistencia', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
-            $table->foreignId('id_docente')->constrained('persona');
-            $table->foreignId('id_horario')->constrained('horario')->onDelete('cascade');
+            $table->foreignId('id_grupo')->constrained('grupo')->onDelete('cascade');
             $table->date('fecha');
-            $table->string('observacion', 255)->nullable();
-            $table->string('estado', 20);
             $table->timestamps();
         });
 
-        // 28. CARGAMASIVA
+        // 30. DETALLE_ASISTENCIA
+        Schema::create('detalle_asistencia', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('id_asistencia')->constrained('asistencia')->onDelete('cascade');
+            $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
+            $table->string('estado', 20);
+            $table->string('observacion', 255)->nullable();
+            $table->timestamps();
+        });
+
+        // 31. CARGAMASIVA
         Schema::create('cargamasiva', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_usuario')->constrained('usuario')->onDelete('cascade');
@@ -61,7 +67,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 29. ADMISION
+        // 32. ADMISION
         Schema::create('admision', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
@@ -73,7 +79,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 30. BITACORA
+        // 33. BITACORA
         Schema::create('bitacora', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_usuario')->constrained('usuario')->onDelete('cascade');
@@ -86,7 +92,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 31. REPORTE
+        // 34. REPORTE
         Schema::create('reporte', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_usuario')->constrained('usuario')->onDelete('cascade');
@@ -104,6 +110,7 @@ return new class extends Migration {
         Schema::dropIfExists('bitacora');
         Schema::dropIfExists('admision');
         Schema::dropIfExists('cargamasiva');
+        Schema::dropIfExists('detalle_asistencia');
         Schema::dropIfExists('asistencia');
         Schema::dropIfExists('nota');
         Schema::dropIfExists('programacion_evaluacion');

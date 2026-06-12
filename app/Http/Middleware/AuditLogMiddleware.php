@@ -42,11 +42,41 @@ class AuditLogMiddleware
             elseif (strpos($path, 'usuario') !== false) $modulo = 'Usuarios';
             elseif (strpos($path, 'rol') !== false) $modulo = 'Roles';
 
+            $descripcion = "Operación $accion en endpoint: /$path";
+            
+            // Lógica para descripciones más humanas
+            if (preg_match('/postulantes\/(\d+)\/pagar/', $path, $matches)) {
+                $descripcion = "Registró el pago del postulante (ID: " . $matches[1] . ")";
+            } elseif (preg_match('/requisitos\/([\d\-]+)\/estado/', $path, $matches)) {
+                $descripcion = "Actualizó el estado de un requisito asignado";
+            } elseif (preg_match('/reportes\/generar/', $path)) {
+                $descripcion = "Generó un nuevo reporte en PDF/Excel";
+            } elseif (preg_match('/materias\/(\d+)\/requisitos/', $path, $matches)) {
+                $descripcion = "Gestionó el catálogo de requisitos de la materia (ID: " . $matches[1] . ")";
+            } elseif (preg_match('/gestiones-academicas\/(\d+)\/grupos\/generar/', $path, $matches)) {
+                $descripcion = "Generó y guardó los grupos para la gestión académica (ID: " . $matches[1] . ")";
+            } elseif (preg_match('/gestiones-academicas\/(\d+)\/horarios\/generar/', $path, $matches)) {
+                $descripcion = "Generó y guardó los horarios automáticos para la gestión (ID: " . $matches[1] . ")";
+            } elseif (preg_match('/gestiones-academicas\/(\d+)/', $path, $matches) && $accion !== 'Crear') {
+                $descripcion = ($accion === 'Actualizar' ? "Actualizó" : "Eliminó") . " la gestión académica (ID: " . $matches[1] . ")";
+            } elseif (preg_match('/usuarios\/(\d+)\/toggle-status/', $path, $matches)) {
+                $descripcion = "Cambió el estado (Activó/Desactivó) del usuario (ID: " . $matches[1] . ")";
+            } elseif (preg_match('/([a-zA-Z\-]+)\/(\d+)/', $path, $matches) && $accion !== 'Crear') {
+                $entidad = str_replace('-', ' ', $matches[1]);
+                $descripcion = ($accion === 'Actualizar' ? "Actualizó" : "Eliminó") . " un registro en $entidad (ID: " . $matches[2] . ")";
+            } else {
+                // Fallback genérico más bonito
+                $entidad = strtolower($modulo);
+                if ($accion === 'Crear') $descripcion = "Registró un nuevo dato en el módulo de $entidad";
+                if ($accion === 'Actualizar') $descripcion = "Actualizó un registro en el módulo de $entidad";
+                if ($accion === 'Eliminar') $descripcion = "Eliminó un registro en el módulo de $entidad";
+            }
+
             DB::table('bitacora')->insert([
                 'id_usuario' => $user->id,
                 'accion' => $accion,
                 'modulo' => $modulo,
-                'descripcion' => "Operación $accion en endpoint: /$path",
+                'descripcion' => $descripcion,
                 'fecha' => now()->toDateString(),
                 'hora' => now()->toTimeString(),
                 'ip_usuario' => $request->ip(),

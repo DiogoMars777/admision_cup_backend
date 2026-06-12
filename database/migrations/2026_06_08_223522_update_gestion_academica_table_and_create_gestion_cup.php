@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Create gestion_cup table
+        // 41. GESTION_CUP
         Schema::create('gestion_cup', function (Blueprint $table) {
             $table->id();
             $table->string('nombre', 100);

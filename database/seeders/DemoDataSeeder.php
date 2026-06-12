@@ -72,7 +72,7 @@ class DemoDataSeeder extends Seeder
         // ═══════════════════════════════════════════════════════════
         // 3. MODALIDADES + MODALIDAD_CARRERA (clase intermedia)
         // ═══════════════════════════════════════════════════════════
-        $modalidadesNombres = ['Presencial', 'Virtual', 'Semi-Presencial'];
+        $modalidadesNombres = ['Presencial', 'Virtual'];
         $modalidadIds = [];
         foreach ($modalidadesNombres as $mod) {
             $id = DB::table('modalidad')->where('nombre', $mod)->value('id');
@@ -119,7 +119,7 @@ class DemoDataSeeder extends Seeder
         // ═══════════════════════════════════════════════════════════
         // 5. MATERIAS
         // ═══════════════════════════════════════════════════════════
-        $materias = ['Matemáticas', 'Física', 'Química', 'Lenguaje', 'Historia', 'Biología', 'Geografía', 'Cívica', 'Filosofía', 'Computación'];
+        $materias = ['Matemáticas', 'Física', 'Computación', 'Inglés'];
         $materiaIds = [];
         foreach ($materias as $materia) {
             $id = DB::table('materia')->where('nombre', $materia)->value('id');
@@ -382,10 +382,19 @@ class DemoDataSeeder extends Seeder
             $grupoId = $faker->randomElement($grupoIds);
             $hora = $faker->randomElement($horas);
 
+            $grupoMateriaId = DB::table('grupo_materia')->where('id_grupo', $grupoId)->where('id_materia', $materiaId)->value('id');
+            if (!$grupoMateriaId) {
+                $grupoMateriaId = DB::table('grupo_materia')->insertGetId([
+                    'id_grupo' => $grupoId,
+                    'id_materia' => $materiaId,
+                    'id_docente' => $docenteId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             DB::table('horario')->insert([
-                'id_grupo' => $grupoId,
-                'id_docente' => $docenteId,
-                'id_materia' => $materiaId,
+                'id_grupo_materia' => $grupoMateriaId,
                 'id_aula' => $aulaId,
                 'dia' => $faker->randomElement($dias),
                 'hora_ini' => $hora[0],
@@ -484,7 +493,7 @@ class DemoDataSeeder extends Seeder
                 'id_postulante' => $postulanteIds[$i],
                 'id_comprobante' => $comprobanteId,
                 'monto' => $faker->randomElement([350.00, 500.00, 750.00]),
-                'metodo_pago' => $faker->randomElement(['Efectivo', 'Transferencia', 'QR']),
+                'modalidad_pago' => $faker->randomElement(['Efectivo', 'Transferencia', 'QR']),
                 'codigo_transaccion' => 'TXN-' . strtoupper($faker->bothify('??###')),
                 'estado' => 'Procesado',
                 'fecha' => now()->format('Y-m-d'),

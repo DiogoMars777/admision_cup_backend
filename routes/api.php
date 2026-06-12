@@ -45,10 +45,13 @@ use App\Http\Controllers\P3_GestionAcademicaBase\CU6_GestionarMaterias\MateriaCo
 use App\Http\Controllers\P3_GestionAcademicaBase\CU7_GestionarDocentes\AspiranteDocenteController;
 use App\Http\Controllers\P3_GestionAcademicaBase\CU7_GestionarDocentes\DocenteController;
 use App\Http\Controllers\P3_GestionAcademicaBase\CU8_GestionarGrupos\GrupoController;
+use App\Http\Controllers\P3_GestionAcademicaBase\CU8_GestionarGrupos\GrupoGeneradorController;
+use App\Http\Controllers\P3_GestionAcademicaBase\Horarios\HorarioGeneradorController;
 use App\Http\Controllers\P3_GestionAcademicaBase\CU9_GestionarAulas\AulaController;
 use App\Http\Controllers\P1_GestionDeSeguridadYAcceso\CU01_GestionDeUsuariosYAutenticacion\RolController;
 use App\Http\Controllers\Pendientes\CarreraController;
 use App\Http\Controllers\Pendientes\GestionAcademicaController;
+use App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocenteAsignadorController;
 use App\Http\Controllers\Reportes\ReportesController;
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -145,11 +148,32 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/gestiones-academicas', [GestionAcademicaController::class, 'store']);
     Route::put('/gestiones-academicas/{id}', [GestionAcademicaController::class, 'update']);
     Route::delete('/gestiones-academicas/{id}', [GestionAcademicaController::class, 'destroy']);
-    
-    // Rutas para Evaluaciones de una Gestión Académica
     Route::get('/gestiones-academicas/{id}/evaluaciones', [GestionAcademicaController::class, 'getEvaluaciones']);
-    Route::put('/gestiones-academicas/{id}/evaluaciones', [GestionAcademicaController::class, 'updateEvaluacion']);
+    Route::post('/gestiones-academicas/{id}/evaluaciones', [GestionAcademicaController::class, 'updateEvaluacion']);
+    Route::get('/gestiones-academicas/cups', [GestionAcademicaController::class, 'getCups']);
 
+    // Rutas de Generación de Grupos
+    Route::get('/gestiones-academicas/{id}/grupos/resumen', [GrupoGeneradorController::class, 'getResumen']);
+    Route::post('/gestiones-academicas/{id}/grupos/simular', [GrupoGeneradorController::class, 'simular']);
+    Route::post('/gestiones-academicas/{id}/grupos/generar', [GrupoGeneradorController::class, 'generar']);
+
+    // Rutas de Generación de Horarios
+    Route::get('/gestiones-academicas/{id}/horarios/resumen', [HorarioGeneradorController::class, 'getResumen']);
+    Route::post('/gestiones-academicas/{id}/horarios/simular', [HorarioGeneradorController::class, 'simular']);
+    Route::post('/gestiones-academicas/{id}/horarios/generar', [HorarioGeneradorController::class, 'generar']);
+
+    // Rutas de Asignación de Docentes
+    Route::get('/gestiones-academicas/{id}/asignaciones-docentes/resumen', [DocenteAsignadorController::class, 'getResumen']);
+    Route::get('/gestiones-academicas/{id}/asignaciones-docentes/grupos', [DocenteAsignadorController::class, 'getGruposProgramados']);
+    Route::get('/gestiones-academicas/asignaciones-docentes/grupos/{grupoId}/materias', [DocenteAsignadorController::class, 'getMateriasDeGrupo']);
+    Route::get('/gestiones-academicas/asignaciones-docentes/materias/{materiaId}/docentes', [DocenteAsignadorController::class, 'getDocentesHabilitados']);
+    Route::post('/gestiones-academicas/{id}/grupo-materia/{grupoMateriaId}/asignar-docente', [DocenteAsignadorController::class, 'asignarDocente']);
+    Route::delete('/gestiones-academicas/{id}/grupo-materia/{grupoMateriaId}/quitar-docente', [DocenteAsignadorController::class, 'quitarDocente']);
+
+    // Portal Docente
+    Route::get('/docente-portal/dashboard', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getDashboardData']);
+    Route::get('/docente-portal/grupos/{id}/estudiantes', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getEstudiantesPorGrupo']);
+    Route::get('/docente-portal/materias', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getMateriasHabilitadas']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });

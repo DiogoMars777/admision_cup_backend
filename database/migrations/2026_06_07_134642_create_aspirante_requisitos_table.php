@@ -8,16 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // 40. ASPIRANTE_REQUISITO
         Schema::create('aspirante_requisito', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_aspirante')->constrained('aspirante_docente', 'id_persona')->onDelete('cascade');
+            $table->foreignId('id_postulacion_docente')->constrained('postulacion_docente')->onDelete('cascade');
             $table->foreignId('id_materia_requisito')->constrained('materia_requisito')->onDelete('cascade');
-            $table->boolean('cumplido')->default(false);
+            $table->foreignId('id_administrativo')->nullable()->constrained('administrativo', 'id_persona')->onDelete('set null');
+            
+            $table->boolean('cumple')->default(false);
+            $table->date('fecha_revision')->nullable();
+            $table->string('observacion', 255)->nullable();
             $table->string('estado', 20)->default('Pendiente');
-            $table->string('documento_url', 255)->nullable();
+            
             $table->timestamps();
             
-            $table->unique(['id_aspirante', 'id_materia_requisito']);
+            $table->unique(['id_postulacion_docente', 'id_materia_requisito'], 'aspirante_req_unique');
         });
     }
 
