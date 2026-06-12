@@ -34,7 +34,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('id_grupo')->constrained('grupo')->onDelete('cascade');
             $table->foreignId('id_materia')->constrained('materia')->onDelete('cascade');
-            $table->foreignId('id_docente')->constrained('persona')->onDelete('cascade');
+            $table->foreignId('id_docente')->nullable()->constrained('persona')->onDelete('cascade');
             $table->timestamps();
             
             $table->unique(['id_grupo', 'id_materia']);

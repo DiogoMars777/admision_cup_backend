@@ -39,7 +39,7 @@ return new class extends Migration {
         // 29. ASISTENCIA
         Schema::create('asistencia', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_grupo')->constrained('grupo')->onDelete('cascade');
+            $table->foreignId('id_grupo_materia')->constrained('grupo_materia')->onDelete('cascade');
             $table->date('fecha');
             $table->timestamps();
         });
@@ -50,7 +50,6 @@ return new class extends Migration {
             $table->foreignId('id_asistencia')->constrained('asistencia')->onDelete('cascade');
             $table->foreignId('id_postulante')->constrained('persona')->onDelete('cascade');
             $table->string('estado', 20);
-            $table->string('observacion', 255)->nullable();
             $table->timestamps();
         });
 

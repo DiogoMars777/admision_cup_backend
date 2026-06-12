@@ -7,12 +7,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
+        // 13.5 GESTION_CUP
+        Schema::create('gestion_cup', function (Blueprint $table) {
+            $table->id();
+            $table->string('nombre', 100);
+            $table->timestamps();
+        });
+
+        // Insert default values CUP 1 and CUP 2
+        DB::table('gestion_cup')->insert([
+            ['nombre' => 'CUP 1', 'created_at' => now(), 'updated_at' => now()],
+            ['nombre' => 'CUP 2', 'created_at' => now(), 'updated_at' => now()]
+        ]);
+
         // 14. GESTION_ACADEMICA
         Schema::create('gestion_academica', function (Blueprint $table) {
             $table->id();
             $table->string('nombre', 100);
             $table->integer('año');
-            $table->string('periodo', 20);
+            $table->foreignId('id_gestion_cup')->nullable()->constrained('gestion_cup')->onDelete('set null');
             $table->date('fecha_ini')->nullable();
             $table->date('fecha_fin')->nullable();
             $table->string('estado', 20)->default('Activo');
@@ -61,5 +74,6 @@ return new class extends Migration {
         Schema::dropIfExists('postulante_carrera');
         Schema::dropIfExists('cupo_carrera');
         Schema::dropIfExists('gestion_academica');
+        Schema::dropIfExists('gestion_cup');
     }
 };

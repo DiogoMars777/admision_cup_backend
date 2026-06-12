@@ -106,21 +106,23 @@ class DocentePortalController extends Controller
             ->join('persona', 'persona.id', '=', 'postulante_grupo.id_postulante')
             ->where('postulante_grupo.id_grupo', $idGrupo)
             ->select('persona.id', 'persona.nombre', 'persona.ci')
+            ->orderBy('persona.nombre', 'asc')
             ->get()
             ->map(function($e) {
-                $n1 = rand(50, 100);
-                $n2 = rand(50, 100);
-                $n3 = rand(50, 100);
-                $promedio = round(($n1 + $n2 + $n3) / 3);
+                $n1 = 0;
+                $n2 = 0;
+                $n3 = 0;
+                $promedio = 0;
                 return [
                     'id' => $e->id,
                     'nombre' => $e->nombre,
+                    'ci' => $e->ci,
                     'nota1' => $n1,
                     'nota2' => $n2,
                     'nota3' => $n3,
                     'nota' => $promedio,
-                    'asistencia' => rand(70, 100), // Mock
-                    'estado' => $promedio >= 51 ? 'Aprobado' : 'Reprobado' // Mock
+                    'asistencia' => 0, // Por ahora 0, se puede calcular real despues
+                    'estado' => 'Cursando'
                 ];
             });
 

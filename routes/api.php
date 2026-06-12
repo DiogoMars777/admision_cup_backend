@@ -174,6 +174,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/docente-portal/dashboard', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getDashboardData']);
     Route::get('/docente-portal/grupos/{id}/estudiantes', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getEstudiantesPorGrupo']);
     Route::get('/docente-portal/materias', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getMateriasHabilitadas']);
+    
+    // Carga Masiva
+    Route::post('/carga-masiva/postulantes', [\App\Http\Controllers\Herramientas\CargaMasivaController::class, 'uploadPostulantes']);
+    Route::get('/carga-masiva/plantilla-postulantes', [\App\Http\Controllers\Herramientas\CargaMasivaController::class, 'downloadPlantillaPostulantes']);
+    Route::post('/carga-masiva/notas', [\App\Http\Controllers\Herramientas\CargaMasivaController::class, 'uploadNotas']);
+    Route::get('/carga-masiva/plantilla-notas', [\App\Http\Controllers\Herramientas\CargaMasivaController::class, 'downloadPlantillaNotas']);
+
+    // Portal Docente - Asistencia
+    Route::get('/docente-portal/grupos/{id}/asistencias', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocenteAsistenciaController::class, 'getHistorial']);
+    Route::post('/docente-portal/grupos/{id}/asistencias', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocenteAsistenciaController::class, 'store']);
+    Route::get('/docente-portal/asistencias/{id}', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocenteAsistenciaController::class, 'show']);
+    Route::put('/docente-portal/asistencias/{id}', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocenteAsistenciaController::class, 'update']);
+    Route::delete('/docente-portal/asistencias/{id}', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocenteAsistenciaController::class, 'destroy']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });
