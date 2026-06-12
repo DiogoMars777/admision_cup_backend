@@ -101,6 +101,17 @@ class DocentePortalController extends Controller
         if (!$grupoMateria) return response()->json([]);
 
         $idGrupo = $grupoMateria->id_grupo;
+        $idMateria = $grupoMateria->id_materia;
+
+        // Evaluaciones de la materia
+        $evaluaciones = DB::table('programacion_evaluacion')
+            ->join('evaluacion', 'evaluacion.id', '=', 'programacion_evaluacion.id_evaluacion')
+            ->where('programacion_evaluacion.id_materia', $idMateria)
+            ->orderBy('evaluacion.id')
+            ->select('programacion_evaluacion.id', 'evaluacion.nombre_eva')
+            ->get();
+
+        $asistenciasTotales = DB::table('asistencia')->where('id_grupo_materia', $idGrupoMateria)->count();
 
         $estudiantes = DB::table('postulante_grupo')
             ->join('persona', 'persona.id', '=', 'postulante_grupo.id_postulante')
@@ -108,25 +119,94 @@ class DocentePortalController extends Controller
             ->select('persona.id', 'persona.nombre', 'persona.ci')
             ->orderBy('persona.nombre', 'asc')
             ->get()
-            ->map(function($e) {
-                $n1 = 0;
-                $n2 = 0;
-                $n3 = 0;
-                $promedio = 0;
+            ->map(function($e) use ($idMateria, $evaluaciones, $idGrupoMateria, $asistenciasTotales) {
+                // Obtener notas reales del postulante para la materia
+                $notasDB = DB::table('nota')
+                    ->where('id_postulante', $e->id)
+                    ->where('id_materia', $idMateria)
+                    ->get()
+                    ->keyBy('id_programacion_evaluacion');
+
+                $nota1 = 0; $nota2 = 0; $nota3 = 0;
+
+                if ($evaluaciones->count() >= 1 && isset($notasDB[$evaluaciones[0]->id])) {
+                    $nota1 = $notasDB[$evaluaciones[0]->id]->puntaje_obtenido ?? 0;
+                }
+                if ($evaluaciones->count() >= 2 && isset($notasDB[$evaluaciones[1]->id])) {
+                    $nota2 = $notasDB[$evaluaciones[1]->id]->puntaje_obtenido ?? 0;
+                }
+                if ($evaluaciones->count() >= 3 && isset($notasDB[$evaluaciones[2]->id])) {
+                    $nota3 = $notasDB[$evaluaciones[2]->id]->puntaje_obtenido ?? 0;
+                }
+
+                // Cálculo de promedio (esto es un ejemplo simple, depende de la regla exacta)
+                $promedio = ($nota1 + $nota2 + $nota3) / 3;
+                $estado = $promedio >= 60 ? 'Aprobado' : 'Reprobado';
+                // Si aún no han dado todos los exámenes, podría ser 'Cursando'
+                if ($nota1 == 0 && $nota2 == 0 && $nota3 == 0) {
+                    $estado = 'Cursando';
+                }
+
+                // Cálculo de Asistencia
+                $porcentajeAsistencia = 0;
+                if ($asistenciasTotales > 0) {
+                    $asistenciasPostulante = DB::table('detalle_asistencia')
+                        ->join('asistencia', 'asistencia.id', '=', 'detalle_asistencia.id_asistencia')
+                        ->where('asistencia.id_grupo_materia', $idGrupoMateria)
+                        ->where('detalle_asistencia.id_postulante', $e->id)
+                        ->whereIn('detalle_asistencia.estado', ['Presente', 'Tarde'])
+                        ->count();
+                    $porcentajeAsistencia = round(($asistenciasPostulante / $asistenciasTotales) * 100);
+                }
+
                 return [
                     'id' => $e->id,
                     'nombre' => $e->nombre,
                     'ci' => $e->ci,
-                    'nota1' => $n1,
-                    'nota2' => $n2,
-                    'nota3' => $n3,
-                    'nota' => $promedio,
-                    'asistencia' => 0, // Por ahora 0, se puede calcular real despues
-                    'estado' => 'Cursando'
+                    'nota1' => round($nota1, 1),
+                    'nota2' => round($nota2, 1),
+                    'nota3' => round($nota3, 1),
+                    'nota' => round($promedio, 1),
+                    'asistencia' => $porcentajeAsistencia,
+                    'estado' => $estado
                 ];
             });
 
-        return response()->json($estudiantes);
+        return response()->json([
+            'evaluaciones' => $evaluaciones, // Para que el frontend sepa los IDs de programación
+            'estudiantes' => $estudiantes
+        ]);
+    }
+
+    public function guardarNotas(Request $request, $idGrupoMateria)
+    {
+        $grupoMateria = DB::table('grupo_materia')->where('id', $idGrupoMateria)->first();
+        if (!$grupoMateria) return response()->json(['error' => 'Grupo no encontrado'], 404);
+
+        $idMateria = $grupoMateria->id_materia;
+        $estudiantesNotas = $request->input('notas', []);
+
+        foreach ($estudiantesNotas as $est) {
+            $idPostulante = $est['id'];
+            foreach ($est['notas_evaluaciones'] as $idProgEval => $puntaje) {
+                // Validación básica de puntaje >= 0
+                $puntajeFinal = max(0, floatval($puntaje));
+                
+                DB::table('nota')->updateOrInsert(
+                    [
+                        'id_postulante' => $idPostulante, 
+                        'id_programacion_evaluacion' => $idProgEval, 
+                        'id_materia' => $idMateria
+                    ],
+                    [
+                        'puntaje_obtenido' => $puntajeFinal, 
+                        'updated_at' => now()
+                    ]
+                );
+            }
+        }
+
+        return response()->json(['message' => 'Notas guardadas correctamente']);
     }
 
     public function getMateriasHabilitadas(Request $request)

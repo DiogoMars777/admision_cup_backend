@@ -53,6 +53,7 @@ use App\Http\Controllers\Pendientes\CarreraController;
 use App\Http\Controllers\Pendientes\GestionAcademicaController;
 use App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocenteAsignadorController;
 use App\Http\Controllers\Reportes\ReportesController;
+use App\Http\Controllers\P2_GestionDePostulantes\PostulantePortalController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -149,7 +150,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/gestiones-academicas/{id}', [GestionAcademicaController::class, 'update']);
     Route::delete('/gestiones-academicas/{id}', [GestionAcademicaController::class, 'destroy']);
     Route::get('/gestiones-academicas/{id}/evaluaciones', [GestionAcademicaController::class, 'getEvaluaciones']);
-    Route::post('/gestiones-academicas/{id}/evaluaciones', [GestionAcademicaController::class, 'updateEvaluacion']);
+    Route::put('/gestiones-academicas/{id}/evaluaciones', [GestionAcademicaController::class, 'updateEvaluacion']);
     Route::get('/gestiones-academicas/cups', [GestionAcademicaController::class, 'getCups']);
 
     // Rutas de Generación de Grupos
@@ -173,7 +174,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Portal Docente
     Route::get('/docente-portal/dashboard', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getDashboardData']);
     Route::get('/docente-portal/grupos/{id}/estudiantes', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getEstudiantesPorGrupo']);
+    Route::post('/docente-portal/grupos/{id}/notas', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'guardarNotas']);
     Route::get('/docente-portal/materias', [\App\Http\Controllers\P3_GestionAcademicaBase\Docentes\DocentePortalController::class, 'getMateriasHabilitadas']);
+
+    // Portal Postulante
+    Route::get('/postulante-portal/mi-grupo', [PostulantePortalController::class, 'getMiGrupo']);
     
     // Carga Masiva
     Route::post('/carga-masiva/postulantes', [\App\Http\Controllers\Herramientas\CargaMasivaController::class, 'uploadPostulantes']);

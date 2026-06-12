@@ -43,7 +43,7 @@
         {
             "id": 2,
             "ci": "25101483",
-            "nombre": "Encarnaci\u00f3n Verduzco",
+            "nombre": "Encarnación Verduzco",
             "sexo": "M",
             "telefono": "975-76-8691",
             "correo": "postulante0@cup.edu.bo",
@@ -53,7 +53,7 @@
         {
             "id": 3,
             "ci": "41313971",
-            "nombre": "D\u00f1a Ana Mendoza Segundo",
+            "nombre": "Dña Ana Mendoza Segundo",
             "sexo": "M",
             "telefono": "926717184",
             "correo": "postulante1@cup.edu.bo",
@@ -63,7 +63,7 @@
         {
             "id": 4,
             "ci": "80089412",
-            "nombre": "Jos\u00e9 Jaime Tercero",
+            "nombre": "José Jaime Tercero",
             "sexo": "F",
             "telefono": "+34 911-36-0529",
             "correo": "postulante2@cup.edu.bo",
@@ -73,7 +73,7 @@
         {
             "id": 5,
             "ci": "78902827",
-            "nombre": "Srta. Juana G\u00e1lvez",
+            "nombre": "Srta. Juana Gálvez",
             "sexo": "F",
             "telefono": "+34 928-188080",
             "correo": "postulante3@cup.edu.bo",
@@ -113,7 +113,7 @@
         {
             "id": 9,
             "ci": "94288680",
-            "nombre": "Sr. Sergio God\u00ednez Tercero",
+            "nombre": "Sr. Sergio Godínez Tercero",
             "sexo": "M",
             "telefono": "908-542806",
             "correo": "postulante7@cup.edu.bo",
@@ -223,7 +223,7 @@
         {
             "id": 20,
             "ci": "98535768",
-            "nombre": "Sa\u00fal Atencio",
+            "nombre": "Saúl Atencio",
             "sexo": "F",
             "telefono": "+34 978-00-8189",
             "correo": "docente8@cup.edu.bo",
@@ -253,7 +253,7 @@
         {
             "id": 23,
             "ci": "41489357",
-            "nombre": "Guillem C\u00f3rdova",
+            "nombre": "Guillem Córdova",
             "sexo": "F",
             "telefono": "980-700774",
             "correo": "aspirante2@cup.edu.bo",
@@ -263,7 +263,7 @@
         {
             "id": 24,
             "ci": "20147294",
-            "nombre": "Ver\u00f3nica Barela",
+            "nombre": "Verónica Barela",
             "sexo": "M",
             "telefono": "+34 926-235087",
             "correo": "aspirante3@cup.edu.bo",
@@ -540,16 +540,16 @@
     "carrera": [
         {
             "id": 1,
-            "nombre": "Ingenier\u00eda de Sistemas",
-            "descripcion": "Carrera de Ingenier\u00eda de Sistemas",
+            "nombre": "Ingeniería de Sistemas",
+            "descripcion": "Carrera de Ingeniería de Sistemas",
             "estado": "Activo",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         },
         {
             "id": 2,
-            "nombre": "Ingenier\u00eda Inform\u00e1tica",
-            "descripcion": "Carrera de Ingenier\u00eda Inform\u00e1tica",
+            "nombre": "Ingeniería Informática",
+            "descripcion": "Carrera de Ingeniería Informática",
             "estado": "Activo",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
@@ -580,8 +580,8 @@
         },
         {
             "id": 6,
-            "nombre": "Contadur\u00eda P\u00fablica",
-            "descripcion": "Carrera de Contadur\u00eda P\u00fablica",
+            "nombre": "Contaduría Pública",
+            "descripcion": "Carrera de Contaduría Pública",
             "estado": "Activo",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
@@ -590,32 +590,32 @@
     "materia": [
         {
             "id": 1,
-            "nombre": "Matem\u00e1ticas",
-            "descripcion": "Materia de Matem\u00e1ticas",
+            "nombre": "Matemáticas",
+            "descripcion": "Materia de Matemáticas",
             "estado": "Activo",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         },
         {
             "id": 2,
-            "nombre": "F\u00edsica",
-            "descripcion": "Materia de F\u00edsica",
+            "nombre": "Física",
+            "descripcion": "Materia de Física",
             "estado": "Activo",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         },
         {
             "id": 3,
-            "nombre": "Computaci\u00f3n",
-            "descripcion": "Materia de Computaci\u00f3n",
+            "nombre": "Computación",
+            "descripcion": "Materia de Computación",
             "estado": "Activo",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         },
         {
             "id": 4,
-            "nombre": "Ingl\u00e9s",
-            "descripcion": "Materia de Ingl\u00e9s",
+            "nombre": "Inglés",
+            "descripcion": "Materia de Inglés",
             "estado": "Activo",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
@@ -626,7 +626,7 @@
             "id": 1,
             "aula_nro": "A-001",
             "capacidad": 49,
-            "tipo_aula": "Te\u00f3rica",
+            "tipo_aula": "Teórica",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         },
@@ -650,7 +650,7 @@
             "id": 4,
             "aula_nro": "A-004",
             "capacidad": 60,
-            "tipo_aula": "Te\u00f3rica",
+            "tipo_aula": "Teórica",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         },
@@ -674,7 +674,7 @@
             "id": 7,
             "aula_nro": "A-007",
             "capacidad": 59,
-            "tipo_aula": "Te\u00f3rica",
+            "tipo_aula": "Teórica",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         },
@@ -682,7 +682,7 @@
             "id": 8,
             "aula_nro": "A-008",
             "capacidad": 45,
-            "tipo_aula": "Te\u00f3rica",
+            "tipo_aula": "Teórica",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         },
@@ -698,7 +698,7 @@
             "id": 10,
             "aula_nro": "A-010",
             "capacidad": 34,
-            "tipo_aula": "Te\u00f3rica",
+            "tipo_aula": "Teórica",
             "created_at": "2026-06-11 22:14:47",
             "updated_at": "2026-06-11 22:14:47"
         }
@@ -720,8 +720,8 @@
     "gestion_academica": [
         {
             "id": 1,
-            "nombre": "Gesti\u00f3n 2026",
-            "a\u00f1o": 2026,
+            "nombre": "Gestión 2026",
+            "año": 2026,
             "fecha_ini": "2026-02-01",
             "fecha_fin": "2026-06-30",
             "estado": "Activo",
@@ -761,21 +761,21 @@
         },
         {
             "id_persona": 16,
-            "grado_academico": "Maestr\u00eda",
+            "grado_academico": "Maestría",
             "experiencia_docente": 2,
             "created_at": "2026-06-11 22:14:49",
             "updated_at": "2026-06-11 22:14:49"
         },
         {
             "id_persona": 17,
-            "grado_academico": "Maestr\u00eda",
+            "grado_academico": "Maestría",
             "experiencia_docente": 12,
             "created_at": "2026-06-11 22:14:49",
             "updated_at": "2026-06-11 22:14:49"
         },
         {
             "id_persona": 18,
-            "grado_academico": "Maestr\u00eda",
+            "grado_academico": "Maestría",
             "experiencia_docente": 14,
             "created_at": "2026-06-11 22:14:49",
             "updated_at": "2026-06-11 22:14:49"
@@ -789,21 +789,21 @@
         },
         {
             "id_persona": 20,
-            "grado_academico": "Maestr\u00eda",
+            "grado_academico": "Maestría",
             "experiencia_docente": 12,
             "created_at": "2026-06-11 22:14:50",
             "updated_at": "2026-06-11 22:14:50"
         },
         {
             "id_persona": 21,
-            "grado_academico": "Maestr\u00eda",
+            "grado_academico": "Maestría",
             "experiencia_docente": 16,
             "created_at": "2026-06-11 22:14:50",
             "updated_at": "2026-06-11 22:14:50"
         },
         {
             "id_persona": 24,
-            "grado_academico": "Maestr\u00eda",
+            "grado_academico": "Maestría",
             "experiencia_docente": 4,
             "created_at": "2026-06-11 23:37:01",
             "updated_at": "2026-06-11 23:37:01"
@@ -862,8 +862,8 @@
             "id_persona": 2,
             "id_gestionacademica": 1,
             "fecha_nac": "2008-08-05",
-            "direccion": "Cami\u00f1o Andrea, 95, 5\u00ba A, 47317, Villa Saldivar",
-            "colegio": "Colegio Grupo Luj\u00e1n-Oliver",
+            "direccion": "Camiño Andrea, 95, 5º A, 47317, Villa Saldivar",
+            "colegio": "Colegio Grupo Luján-Oliver",
             "turno_preferido": "Tarde",
             "modalidad_preferida": "Presencial",
             "created_at": "2026-06-11 22:14:47",
@@ -873,7 +873,7 @@
             "id_persona": 3,
             "id_gestionacademica": 1,
             "fecha_nac": "2005-12-15",
-            "direccion": "Travessera Clara, 52, 55\u00ba D, 13532, L' Domingo",
+            "direccion": "Travessera Clara, 52, 55º D, 13532, L' Domingo",
             "colegio": "Colegio Bahena de Valdez e Hijos",
             "turno_preferido": "Tarde",
             "modalidad_preferida": "Presencial",
@@ -884,7 +884,7 @@
             "id_persona": 4,
             "id_gestionacademica": 1,
             "fecha_nac": "2004-05-19",
-            "direccion": "Carrer Yeray, 98, 0\u00ba, 70207, Villa De Jes\u00fas",
+            "direccion": "Carrer Yeray, 98, 0º, 70207, Villa De Jesús",
             "colegio": "Colegio Gestora Camarillo-Loya",
             "turno_preferido": "Tarde",
             "modalidad_preferida": "Presencial",
@@ -895,7 +895,7 @@
             "id_persona": 5,
             "id_gestionacademica": 1,
             "fecha_nac": "2008-11-15",
-            "direccion": "R\u00faa Luisa, 9, 42\u00ba C, 02988, Os Calvillo Medio",
+            "direccion": "Rúa Luisa, 9, 42º C, 02988, Os Calvillo Medio",
             "colegio": "Colegio Empresa Aguirre-Nava",
             "turno_preferido": "Tarde",
             "modalidad_preferida": "Presencial",
@@ -917,8 +917,8 @@
             "id_persona": 7,
             "id_gestionacademica": 1,
             "fecha_nac": "2008-09-02",
-            "direccion": "Carrer Ure\u00f1a, 609, 9\u00ba D, 19056, L' Delafuente",
-            "colegio": "Colegio Air Mondrag\u00f3n-Perales",
+            "direccion": "Carrer Ureña, 609, 9º D, 19056, L' Delafuente",
+            "colegio": "Colegio Air Mondragón-Perales",
             "turno_preferido": "Tarde",
             "modalidad_preferida": "Virtual",
             "created_at": "2026-06-11 22:14:48",
@@ -928,9 +928,9 @@
             "id_persona": 9,
             "id_gestionacademica": 1,
             "fecha_nac": "2004-01-23",
-            "direccion": "Pla\u00e7a Bustamante, 58, 6\u00ba 6\u00ba, 73048, Madrid del Pened\u00e8s",
+            "direccion": "Plaça Bustamante, 58, 6º 6º, 73048, Madrid del Penedès",
             "colegio": "Colegio Global Rangel-Hinojosa",
-            "turno_preferido": "Ma\u00f1ana",
+            "turno_preferido": "Mañana",
             "modalidad_preferida": "Virtual",
             "created_at": "2026-06-11 22:14:48",
             "updated_at": "2026-06-11 22:34:47"
@@ -939,7 +939,7 @@
             "id_persona": 11,
             "id_gestionacademica": 1,
             "fecha_nac": "2004-03-05",
-            "direccion": "Calle Otero, 5, 5\u00ba E, 22982, Pel\u00e1ez del Bages",
+            "direccion": "Calle Otero, 5, 5º E, 22982, Peláez del Bages",
             "colegio": "Colegio Empresa Morales y Flia.",
             "turno_preferido": "Tarde",
             "modalidad_preferida": "Presencial",
@@ -950,8 +950,8 @@
             "id_persona": 10,
             "id_gestionacademica": 1,
             "fecha_nac": "2008-10-24",
-            "direccion": "Avinguda Pol, 308, 8\u00ba 9\u00ba, 57981, As Pab\u00f3n",
-            "colegio": "Colegio Corporaci\u00f3n Palacios SRL",
+            "direccion": "Avinguda Pol, 308, 8º 9º, 57981, As Pabón",
+            "colegio": "Colegio Corporación Palacios SRL",
             "turno_preferido": "Noche",
             "modalidad_preferida": "Presencial",
             "created_at": "2026-06-11 22:14:48",
@@ -961,8 +961,8 @@
             "id_persona": 8,
             "id_gestionacademica": 1,
             "fecha_nac": "2005-09-25",
-            "direccion": "Ruela Paz, 969, 97\u00ba C, 40046, A Villegas del Bages",
-            "colegio": "Colegio N\u00fa\u00f1ez-Venegas",
+            "direccion": "Ruela Paz, 969, 97º C, 40046, A Villegas del Bages",
+            "colegio": "Colegio Núñez-Venegas",
             "turno_preferido": "Tarde",
             "modalidad_preferida": "Virtual",
             "created_at": "2026-06-11 22:14:48",
@@ -1172,6 +1172,20 @@
             "fecha": null,
             "created_at": "2026-06-11 22:14:50",
             "updated_at": "2026-06-11 22:14:50"
+        }
+    ],
+    "docente_materia": [
+        {
+            "id_docente": 24,
+            "id_materia": 1,
+            "created_at": "2026-06-12 14:31:23",
+            "updated_at": "2026-06-12 14:31:23"
+        },
+        {
+            "id_docente": 24,
+            "id_materia": 3,
+            "created_at": "2026-06-12 14:31:23",
+            "updated_at": "2026-06-12 14:31:23"
         }
     ]
 }

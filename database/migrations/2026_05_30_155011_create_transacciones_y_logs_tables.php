@@ -32,7 +32,6 @@ return new class extends Migration {
             $table->foreignId('id_programacion_evaluacion')->constrained('programacion_evaluacion')->onDelete('cascade');
             $table->foreignId('id_materia')->constrained('materia')->onDelete('cascade');
             $table->decimal('puntaje_obtenido', 5, 2)->nullable();
-            $table->string('estado', 20)->nullable();
             $table->timestamps();
         });
 
