@@ -188,29 +188,6 @@ class DemoDataSeeder extends Seeder
             }
         }
 
-        // ═══════════════════════════════════════════════════════════
-        // 9. GRUPOS
-        // ═══════════════════════════════════════════════════════════
-        $grupoIds = [];
-        $turnos = ['Mañana', 'Tarde', 'Noche'];
-        for ($i = 1; $i <= 10; $i++) {
-            $nombreGrupo = 'Grupo ' . str_pad($i, 2, '0', STR_PAD_LEFT);
-            $id = DB::table('grupo')->where('nombre', $nombreGrupo)->value('id');
-            if (!$id) {
-                $id = DB::table('grupo')->insertGetId([
-                    'id_gestionacademica' => $gestionId,
-                    'nombre' => $nombreGrupo,
-                    'cupo_max' => 50,
-                    'cant_estudiante' => $faker->numberBetween(10, 45),
-                    'modalidad' => $faker->randomElement($modalidadesNombres),
-                    'turno' => $faker->randomElement($turnos),
-                    'estado' => 'Activo',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-            $grupoIds[] = $id;
-        }
 
         // ═══════════════════════════════════════════════════════════
         // 10. POSTULANTES (10) con turno_preferido, modalidad_preferida
@@ -279,15 +256,7 @@ class DemoDataSeeder extends Seeder
                 ]);
             }
 
-            // Asignar postulante a un grupo
-            $grupoAsignado = $grupoIds[$i % count($grupoIds)];
-            DB::table('postulante_grupo')->insert([
-                'id_postulante' => $personaId,
-                'id_grupo' => $grupoAsignado,
-                'fecha_asignacion' => now()->format('Y-m-d'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+
 
             if ($i < 5) {
                 DB::table('usuario')->insert([
@@ -363,44 +332,6 @@ class DemoDataSeeder extends Seeder
             $docenteIds[] = $personaId;
         }
 
-        // ═══════════════════════════════════════════════════════════
-        // 12. HORARIOS (asignar docente-materia-aula-grupo)
-        // ═══════════════════════════════════════════════════════════
-        $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-        $horas = [
-            ['08:00', '09:30'], ['09:45', '11:15'], ['11:30', '13:00'],
-            ['14:00', '15:30'], ['15:45', '17:15'], ['18:00', '19:30'],
-        ];
-
-        for ($i = 0; $i < 15; $i++) {
-            $docenteId = $faker->randomElement($docenteIds);
-            $materiaId = $faker->randomElement($materiaIdsArray);
-            $aulaId = $faker->randomElement($aulaIds);
-            $grupoId = $faker->randomElement($grupoIds);
-            $hora = $faker->randomElement($horas);
-
-            $grupoMateriaId = DB::table('grupo_materia')->where('id_grupo', $grupoId)->where('id_materia', $materiaId)->value('id');
-            if (!$grupoMateriaId) {
-                $grupoMateriaId = DB::table('grupo_materia')->insertGetId([
-                    'id_grupo' => $grupoId,
-                    'id_materia' => $materiaId,
-                    'id_docente' => $docenteId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            DB::table('horario')->insert([
-                'id_grupo_materia' => $grupoMateriaId,
-                'id_aula' => $aulaId,
-                'dia' => $faker->randomElement($dias),
-                'hora_ini' => $hora[0],
-                'hora_fin' => $hora[1],
-                'modalidad' => $faker->randomElement($modalidadesNombres),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
 
         // ═══════════════════════════════════════════════════════════
         // 13. REQUISITOS + POSTULANTE_REQUISITO
